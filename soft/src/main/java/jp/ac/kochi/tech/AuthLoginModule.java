@@ -15,7 +15,6 @@ public class AuthLoginModule extends HttpServlet {
     // 本来はデータベースを使いますが、AdminShiftServletのリストと同じようにメモリ上で処理します
     private static Map<String, String> userDb = new HashMap<>();
 
-    // テスト用ユーザーを初期登録（ID: taro, Pass: 1234）
     static {
         userDb.put("taro", "1234");
         userDb.put("hanako", "pass");
