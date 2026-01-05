@@ -11,11 +11,10 @@ import java.util.*;
 @WebServlet("/authLogin") 
 public class AuthLoginModule extends HttpServlet {
 
-    // 🔴 簡易ユーザーデータベース（サーバーが動いている間だけ有効なモック）
-    // 本来はデータベースを使いますが、AdminShiftServletのリストと同じようにメモリ上で処理します
     private static Map<String, String> userDb = new HashMap<>();
 
     static {
+        // テスト用データ
         userDb.put("taro", "1234");
         userDb.put("hanako", "pass");
     }
@@ -26,32 +25,28 @@ public class AuthLoginModule extends HttpServlet {
 
         req.setCharacterEncoding("UTF-8");
 
-        // フォームから送信されたIDとパスワードを取得
-        String name = req.getParameter("name"); // または "id"
-        String pass = req.getParameter("pass"); // または "password"
+        // 🟢 修正点1: JSPの input name="" に合わせる
+        String userID = req.getParameter("userID");   // JSP側の name="userID"
+        String password = req.getParameter("password"); // JSP側の name="password"
 
-        // ログイン判定（userDbに含まれているか、パスワードが合うか）
-        if (userDb.containsKey(name) && userDb.get(name).equals(pass)) {
-            // ■ 成功時: セッションにユーザー情報を保存
+        // ログイン判定
+        // userDbのキーとパスワードをチェック
+        if (userDb.containsKey(userID) && userDb.get(userID).equals(password)) {
             HttpSession session = req.getSession();
-            session.setAttribute("loginUser", name);
+            session.setAttribute("loginUser", userID);
 
-            // ログイン後の画面（例: adminShiftなど）へ移動
-            // redirectの方がリロード時の再送信を防げますが、ここではforwardの形式に合わせています
+            // ログイン成功時の移動先（adminShift.jspなど、実在するファイルへ）
             req.getRequestDispatcher("/adminShift.jsp").forward(req, resp);
         } else {
-            // ■ 失敗時: エラーメッセージを入れてログイン画面に戻す
+            // 失敗時
             req.setAttribute("errorMessage", "IDまたはパスワードが違います");
-            req.getRequestDispatcher("/login.jsp").forward(req, resp);
+            req.getRequestDispatcher("/UserLogin.jsp").forward(req, resp);
         }
     }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
-        
-        // ログイン画面を表示するだけ
-        // (もしログアウト処理を入れるならここに書くこともあります)
-        req.getRequestDispatcher("/login.jsp").forward(req, resp);
+        req.getRequestDispatcher("/UserLogin.jsp").forward(req, resp);
     }
 }
