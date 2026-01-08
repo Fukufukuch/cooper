@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+    <classpathentry kind="src" path="mysql-connector-j-9.5.0/mysql-connector-j-9.5.0/src/main/core-api/java"/>
+    <classpathentry kind="src" path="mysql-connector-j-9.5.0/mysql-connector-j-9.5.0/src/main/core-impl/java"/>
+    <classpathentry kind="src" path="mysql-connector-j-9.5.0/mysql-connector-j-9.5.0/src/main/user-api/java"/>
+    <classpathentry kind="src" path="mysql-connector-j-9.5.0/mysql-connector-j-9.5.0/src/main/user-impl/java"/>
+    <classpathentry kind="src" path="mysql-connector-j-9.5.0/mysql-connector-j-9.5.0/src/main/protocol-impl/java"/>
+    <classpathentry kind="src" path="mysql-connector-j-9.5.0/mysql-connector-j-9.5.0/src/generated/java"/>
+    <classpathentry kind="src" path="mysql-connector-j-9.5.0/mysql-connector-j-9.5.0/src/build/java"/>
+    <classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+    <classpathentry kind="output" path="bin"/>
+</classpath>
