@@ -42,21 +42,26 @@ public class ShiftGenerator {
                     List<Integer> shiftWorkerList = slotMap.computeIfAbsent(currentPosition, k -> new ArrayList<>());
                     slotMap.put(currentPosition, shiftWorkerList);
 
-                    List<Worker> assignWorkers = assignWorkers(currentDate, workers, currentPosition, currentSlot, dayMap, shiftWorkerList, option);
-                    assignWorkers = sortListByMonthMinutes(assignWorkers);
+                    // phase2:新人制約割当
+                    assignUnnewcomerIfPossible(workers, shiftWorkerList, currentPosition, currentSlot, currentDate, dayMap, option);
 
-                    // phase2:通常割当
+                    // phase3:通常割当
                     assignNormal(workers, shiftWorkerList, currentPosition, currentSlot, currentDate, dayMap, option);
 
                     // 管理者不足チェック
                     int authorityCount = countAuthorityAssigned(slotMap, workers);
                     if (isAuthorityRequired(currentPosition, currentSlot) && authorityCount < option.getRequiredAuthorityWorkers()) {
-                        addShortageSlot(currentDate, currentSlot, currentPosition, option.getRequiredAuthorityWorkers(), countAuthorityAssigned(slotMap, workers), false);
+                        addShortageSlot(currentDate, currentSlot, currentPosition, option.getRequiredAuthorityWorkers(), countAuthorityAssigned(slotMap, workers), false, true, true);
                     }
 
                     // 人数不足チェック
                     if (shiftWorkerList.size() < minWorkersRequired(currentPosition, currentSlot)) {
-                        addShortageSlot(currentDate, currentSlot, currentPosition, minWorkersRequired(currentPosition, currentSlot), shiftWorkerList.size(), true);
+                        addShortageSlot(currentDate, currentSlot, currentPosition, minWorkersRequired(currentPosition, currentSlot), shiftWorkerList.size(), true, false, true);
+                    }
+
+                    // 先輩不足チェック
+                    if (hasSeniorRequired(slotMap, workers)) {
+                        addShortageSlot(currentDate, currentSlot, currentPosition, option.getRequiredSeniorWorkers(), countSeniorAssigned(slotMap, workers), true, true, false);
                     }
                 }
             }
@@ -114,6 +119,25 @@ public class ShiftGenerator {
         }
     }
 
+    // 新人制約割当メソッド
+    private void assignUnnewcomerIfPossible(List<Worker> workers, List<Integer> shiftWorkerList, Position currentPosition, TimeSlot currentSlot, LocalDate currentDate, Map<TimeSlot, Map<Position, List<Integer>>> dayMap, Option option) {
+        List<Worker> assignWorkers = assignWorkers(currentDate, workers, currentPosition, currentSlot, dayMap, shiftWorkerList, option);
+        assignWorkers = sortListByMonthMinutes(assignWorkers);
+        assignWorkers = sortListByAvailablePositionsCount(assignWorkers);
+
+        if (assignWorkers.isEmpty()) return;
+        if (!hasSeniorRequired(dayMap.get(currentSlot), workers)) return;
+
+        for (Worker w : assignWorkers) {
+            if (!w.isNewcomer()) continue;
+            if (!canAssign(currentDate, w, currentPosition, currentSlot, dayMap, shiftWorkerList, option)) continue;
+
+            shiftWorkerList.add(w.getId());
+            addProcess(w, currentSlot);
+            break;
+        }
+    }
+
     // 通常割当メソッド
     private void assignNormal(List<Worker> workers, List<Integer> shiftWorkerList, Position currentPosition, TimeSlot currentSlot, LocalDate currentDate, Map<TimeSlot, Map<Position, List<Integer>>> dayMap, Option option) {
         List<Worker> assignWorkers = assignWorkers(currentDate, workers, currentPosition, currentSlot, dayMap, shiftWorkerList, option);
@@ -130,9 +154,8 @@ public class ShiftGenerator {
     }
 
     // 不足枠追加メソッド
-    private void addShortageSlot(LocalDate date, TimeSlot slot, Position position,
-                                 int required, int assigned, boolean normalShortage) {
-        shortageSlots.add(new shortageSlot(date, slot, position, required, assigned, normalShortage));
+    private void addShortageSlot(LocalDate date, TimeSlot slot, Position position, int required, int assigned, boolean authorityShortage, boolean workerShortage, boolean seniorShortage) {
+        shortageSlots.add(new shortageSlot(date, slot, position, required, assigned, authorityShortage, workerShortage, seniorShortage));
     }
 
     // 最少必要人数取得メソッド
@@ -175,6 +198,24 @@ public class ShiftGenerator {
             if (ids.contains(worker.getId())) return true;
         }
         return false;
+    }
+
+    // 先輩必要判定メソッド
+    public static boolean hasSeniorRequired(Map<Position, List<Integer>> slotMap, List<Worker> workers) {
+        return countSeniorAssigned(slotMap, workers) == 0;
+    }
+
+    // 先輩割当数カウントメソッド
+    public static int countSeniorAssigned(Map<Position, List<Integer>> slotMap, List<Worker> workers) {
+        int count = 0;
+        for (List<Integer> ids : slotMap.values()) {
+            for (int id : ids) {
+                for (Worker w : workers) {
+                    if (w.getId() == id && !w.isNewcomer()) count++;
+                }
+            }
+        }
+        return count;
     }
 
     // 管理者必要判定メソッド

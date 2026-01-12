@@ -16,7 +16,7 @@ public class DummyWorkerFactory {
         this.timeSlots = createTimeSlots();
         this.positions = createPositions();
         this.workers = createWorkers();
-        this.option = new Option(8000, 720, 1); // 月労働時間上限設定(分)
+        this.option = new Option(8000, 720, 1, 1); // 月労働時間上限設定(分)
         this.days = 7; // 生成期間設定
     }
 

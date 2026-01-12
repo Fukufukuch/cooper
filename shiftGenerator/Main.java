@@ -59,7 +59,8 @@ public class Main {
             return;
         }
         System.out.println("＜管理者未割当枠＞");
-        if (shortages.stream().noneMatch(s -> !s.isAuthorityAssigned())) {
+        boolean hasAuthorityShortage = shortages.stream().anyMatch(s -> !s.isAuthorityAssigned());
+        if (!hasAuthorityShortage) {
             System.out.println("該当なし");
         } else {
             for (shortageSlot s : shortages) {
@@ -75,12 +76,29 @@ public class Main {
         }
         
         System.out.println("\n＜労働者未割当枠＞");
-        if (shortages.stream().noneMatch(s -> s.isAuthorityAssigned())) {
+        boolean hasWorkerShortage = shortages.stream().anyMatch(s -> !s.isWorkerAssigned());
+        if (!hasWorkerShortage) {
             System.out.println("該当なし");
-            return;
         } else {
             for (shortageSlot s : shortages) {
-                if (!s.isAuthorityAssigned()) continue;
+                if (s.isWorkerAssigned()) continue;
+                System.out.println(
+                    s.getDate() + " " +
+                    s.getTimeSlot().getName() + " " +
+                    s.getPosition().getName() +
+                    "（必要:" + s.getRequired() +
+                    " / 割当:" + s.getAssigned() + "）"
+                );
+            }
+        }
+
+        System.out.println("\n＜先輩未割当枠＞");
+        boolean hasSeniorShortage = shortages.stream().anyMatch(s -> !s.isSeniorAssigned());
+        if (!hasSeniorShortage) {
+            System.out.println("該当なし");
+        } else {
+            for (shortageSlot s : shortages) {
+                if (s.isSeniorAssigned()) continue;
                 System.out.println(
                     s.getDate() + " " +
                     s.getTimeSlot().getName() + " " +
