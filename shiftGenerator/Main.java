@@ -6,12 +6,11 @@ public class Main {
 
     public static void main(String[] args) {
         DummyWorkerFactory testData = new DummyWorkerFactory();
-        List<TimeSlot> timeSlots = testData.timeSlots;
-        List<Position> positions = testData.positions;
-        List<Worker> workers = testData.workers;
-        Option option = testData.option;
-        int days = testData.days;
-
+        List<TimeSlot> timeSlots = testData.getTimeSlots();
+        List<Position> positions = testData.getPositions();
+        List<Worker> workers = testData.getWorkers();
+        Option option = testData.getOption();
+        int days = testData.getDays();
         // シフト生成初日日付取得
         LocalDate firstDate = workers.stream().flatMap(w -> w.getAssignShiftTimeslotIds().keySet().stream()).min(LocalDate::compareTo).orElseThrow();
 
