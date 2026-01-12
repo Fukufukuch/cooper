@@ -21,18 +21,18 @@ public class LoginServlet extends HttpServlet {
 	//ログイン画面を表示させる
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		RequestDispatcher dispatcher =
-				request.getRequestDispatcher("/WEB-INF/jsp/login.jsp");
+				request.getRequestDispatcher("/webapp/login.jsp");
 		dispatcher.forward(request, response);
 	}
 
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
         // 文字コードの設定
-		response.setContentType("text/html; charset=UTF-8");
-		request.setCharacterEncoding("UTF-8");
+		//response.setContentType("text/html; charset=UTF-8");
+		//request.setCharacterEncoding("UTF-8");
 
 		// ログイン画面で入力された値を取得
-		String user_id = request.getParameter("admin_id");
-		String password = request.getParameter("password");
+		//String user_id = request.getParameter("admin_id");
+		//String password = request.getParameter("password");
 	}
 }
