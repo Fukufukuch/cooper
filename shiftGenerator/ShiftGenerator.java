@@ -10,6 +10,7 @@ public class ShiftGenerator {
     private final Option option;
 
     private List<shortageSlot> shortageSlots = new ArrayList<>();
+    private List<WarningSlot> warningSlots = new ArrayList<>();
 
     public ShiftGenerator(int days, LocalDate firstDate, List<TimeSlot> timeSlots, List<Position> positions, List<Worker> workers, Option option) {
         this.days = days;
@@ -51,17 +52,24 @@ public class ShiftGenerator {
                     // 管理者不足チェック
                     int authorityCount = countAuthorityAssigned(slotMap, workers);
                     if (isAuthorityRequired(currentPosition, currentSlot) && authorityCount < option.getRequiredAuthorityWorkers()) {
-                        addShortageSlot(currentDate, currentSlot, currentPosition, option.getRequiredAuthorityWorkers(), countAuthorityAssigned(slotMap, workers), false, true, true);
+                        addShortageSlot(currentDate, currentSlot, currentPosition, option.getRequiredAuthorityWorkers(), countAuthorityAssigned(slotMap, workers), ShortageType.AUTHORITY);
                     }
 
                     // 人数不足チェック
                     if (shiftWorkerList.size() < minWorkersRequired(currentPosition, currentSlot)) {
-                        addShortageSlot(currentDate, currentSlot, currentPosition, minWorkersRequired(currentPosition, currentSlot), shiftWorkerList.size(), true, false, true);
+                        addShortageSlot(currentDate, currentSlot, currentPosition, minWorkersRequired(currentPosition, currentSlot), shiftWorkerList.size(), ShortageType.WORKER);
                     }
 
                     // 先輩不足チェック
-                    if (hasSeniorRequired(slotMap, workers)) {
-                        addShortageSlot(currentDate, currentSlot, currentPosition, option.getRequiredSeniorWorkers(), countSeniorAssigned(slotMap, workers), true, true, false);
+                    if (hasSeniorRequired(slotMap, workers, option)) {
+                        addShortageSlot(currentDate, currentSlot, currentPosition, option.getRequiredSeniorWorkers(), countSeniorAssigned(slotMap, workers), ShortageType.SENIOR);
+                    }
+
+                    // タグ不整合チェック
+                    for (int set : extractNonconformTags(workers)) {
+                        if (isNonconformTagAssigned(slotMap, workers, set)) {
+                            addWarningSlot(currentDate, currentSlot, currentPosition, set, hasNonconformTagWorkersList(slotMap, workers, set), WarningType.NONCONFORM_TAG);
+                        }
                     }
                 }
             }
@@ -73,6 +81,11 @@ public class ShiftGenerator {
     // 不足枠リスト取得メソッド
     public List<shortageSlot> getShortageSlots() {
         return shortageSlots;
+    }
+
+    // 警告枠リスト取得メソッド
+    public List<WarningSlot> getWarningSlots() {
+        return warningSlots;
     }
 
     // 管理者割当メソッド
@@ -126,7 +139,7 @@ public class ShiftGenerator {
         assignWorkers = sortListByAvailablePositionsCount(assignWorkers);
 
         if (assignWorkers.isEmpty()) return;
-        if (!hasSeniorRequired(dayMap.get(currentSlot), workers)) return;
+        if (!hasSeniorRequired(dayMap.get(currentSlot), workers, option)) return;
 
         for (Worker w : assignWorkers) {
             if (!w.isNewcomer()) continue;
@@ -154,8 +167,13 @@ public class ShiftGenerator {
     }
 
     // 不足枠追加メソッド
-    private void addShortageSlot(LocalDate date, TimeSlot slot, Position position, int required, int assigned, boolean authorityShortage, boolean workerShortage, boolean seniorShortage) {
-        shortageSlots.add(new shortageSlot(date, slot, position, required, assigned, authorityShortage, workerShortage, seniorShortage));
+    private void addShortageSlot(LocalDate date, TimeSlot slot, Position position, int required, int assigned, ShortageType shortageType) {
+        shortageSlots.add(new shortageSlot(date, slot, position, required, assigned, shortageType));
+    }
+
+    // 警告枠追加メソッド
+    private void addWarningSlot(LocalDate date, TimeSlot slot, Position position, int nonconformTag, List<Integer> warningWorkers, WarningType warningType) {
+        warningSlots.add(new WarningSlot(date, slot, position, nonconformTag, warningWorkers, warningType));
     }
 
     // 最少必要人数取得メソッド
@@ -201,8 +219,8 @@ public class ShiftGenerator {
     }
 
     // 先輩必要判定メソッド
-    public static boolean hasSeniorRequired(Map<Position, List<Integer>> slotMap, List<Worker> workers) {
-        return countSeniorAssigned(slotMap, workers) == 0;
+    public static boolean hasSeniorRequired(Map<Position, List<Integer>> slotMap, List<Worker> workers, Option option) {
+        return countSeniorAssigned(slotMap, workers) < option.getRequiredSeniorWorkers();
     }
 
     // 先輩割当数カウントメソッド
@@ -248,6 +266,41 @@ public class ShiftGenerator {
             if (w.isHasAuthority()) list.add(w);
         }
         return list;
+    }
+
+    // 不適合タグ割当確認メソッド
+    public static boolean isNonconformTagAssigned(Map<Position, List<Integer>> slotMap, List<Worker> workers, int nonconformTag) {
+        if (hasNonconformTagWorkersList(slotMap, workers, nonconformTag).size() > 1) return true;
+        else return false;
+    }
+
+    // 不適合タグ該当従業員リスト取得メソッド
+    public static List<Integer> hasNonconformTagWorkersList(Map<Position, List<Integer>> slotMap, List<Worker> workers, int nonconformTag) {
+        List<Integer> result = new ArrayList<>();
+
+        // slot 内に割り当てられた ID を一意に集める
+        Set<Integer> assignedIds = new HashSet<>();
+        for (List<Integer> ids : slotMap.values()) {
+            assignedIds.addAll(ids);
+        }
+
+        // その ID に対応する worker だけを見る
+        for (Worker w : workers) {
+            if (assignedIds.contains(w.getId())
+                    && w.getNonconformTags().contains(nonconformTag)) {
+                result.add(w.getId());
+            }
+        }
+        return result;
+    }
+
+    // 不適合タグ抽出メソッド
+    public static Set<Integer> extractNonconformTags(List<Worker> workers) {
+        Set<Integer> set = new HashSet<>();
+        for (Worker w : workers) {
+            set.addAll(w.getNonconformTags());
+        }
+        return set;
     }
 
     // 月労働時間昇順ソートメソッド

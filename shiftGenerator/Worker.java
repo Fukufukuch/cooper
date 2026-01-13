@@ -11,10 +11,10 @@ public class Worker {
     private final boolean hasAuthority;
     private final Map<LocalDate, Set<Integer>> assignShiftTimeslotIds;
     private final Set<Integer> availablePositionIds;
-    private final Set<Integer> tags;
+    private final Set<Integer> nonconformTags;
 
     public Worker(int id, boolean hasAuthority, int monthlyWorkMinutes, int totalWorkMinutes, 
-                  Map<LocalDate, Set<Integer>> assignShiftTimeslotIds, Set<Integer> availablePositionIds, Set<Integer> tags) {
+                  Map<LocalDate, Set<Integer>> assignShiftTimeslotIds, Set<Integer> availablePositionIds, Set<Integer> nonconformTags) {
         //入力情報
         this.id = id;                                           //労働者ID
         this.hasAuthority = hasAuthority;                       //権限者か
@@ -22,7 +22,7 @@ public class Worker {
         this.totalWorkMinutes = totalWorkMinutes;               //累計労働時間
         this.assignShiftTimeslotIds = assignShiftTimeslotIds;   //シフト希望情報
         this.availablePositionIds = availablePositionIds;       //入れるポジションのID
-        this.tags = tags;                                       //不適合タグ
+        this.nonconformTags = nonconformTags;                   //不適合タグ
 
         //入力参照情報
         this.dailyWorkMinutes = 0;                              //日労働時間
@@ -53,8 +53,8 @@ public class Worker {
         return availablePositionIds;
     }
 
-    public Set<Integer> getTags() {
-        return tags;
+    public Set<Integer> getNonconformTags() {
+        return nonconformTags;
     }
 
     public boolean isNewcomer() {

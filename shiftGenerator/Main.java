@@ -22,8 +22,10 @@ public class Main {
 
         // シフト表示
         printShift(shift, timeSlots, positions);
-        // 人数不足枠表示
+        // 不足枠表示
         printShortages(generator.getShortageSlots());
+        // 警告枠表示
+        printWarnings(generator.getWarningSlots());
         // 従業員月労働時間表示
         printWorkerMonthMinutes(workers);
     }
@@ -59,12 +61,12 @@ public class Main {
             return;
         }
         System.out.println("＜管理者未割当枠＞");
-        boolean hasAuthorityShortage = shortages.stream().anyMatch(s -> !s.isAuthorityAssigned());
+        boolean hasAuthorityShortage = shortages.stream().anyMatch(s -> s.getShortageType() == ShortageType.AUTHORITY);
         if (!hasAuthorityShortage) {
             System.out.println("該当なし");
         } else {
             for (shortageSlot s : shortages) {
-                if (s.isAuthorityAssigned()) continue;
+                if (s.getShortageType() != ShortageType.AUTHORITY) continue;
                 System.out.println(
                     s.getDate() + " " +
                     s.getTimeSlot().getName() + " " +
@@ -76,12 +78,12 @@ public class Main {
         }
         
         System.out.println("\n＜労働者未割当枠＞");
-        boolean hasWorkerShortage = shortages.stream().anyMatch(s -> !s.isWorkerAssigned());
+        boolean hasWorkerShortage = shortages.stream().anyMatch(s -> s.getShortageType() == ShortageType.WORKER);
         if (!hasWorkerShortage) {
             System.out.println("該当なし");
         } else {
             for (shortageSlot s : shortages) {
-                if (s.isWorkerAssigned()) continue;
+                if (s.getShortageType() != ShortageType.WORKER) continue;
                 System.out.println(
                     s.getDate() + " " +
                     s.getTimeSlot().getName() + " " +
@@ -93,12 +95,12 @@ public class Main {
         }
 
         System.out.println("\n＜先輩未割当枠＞");
-        boolean hasSeniorShortage = shortages.stream().anyMatch(s -> !s.isSeniorAssigned());
+        boolean hasSeniorShortage = shortages.stream().anyMatch(s -> s.getShortageType() == ShortageType.SENIOR);
         if (!hasSeniorShortage) {
             System.out.println("該当なし");
         } else {
             for (shortageSlot s : shortages) {
-                if (s.isSeniorAssigned()) continue;
+                if (s.getShortageType() != ShortageType.SENIOR) continue;
                 System.out.println(
                     s.getDate() + " " +
                     s.getTimeSlot().getName() + " " +
@@ -107,6 +109,23 @@ public class Main {
                     " / 割当:" + s.getAssigned() + "）"
                 );
             }
+        }
+    }
+
+    private static void printWarnings(List<WarningSlot> warnings) {
+        System.out.println("\n【警告枠一覧】");
+        System.out.println("＜不適合タグ警告枠＞");
+        if (warnings.isEmpty()) {
+            System.out.println("該当なし");
+            return;
+        }
+        for (WarningSlot w : warnings) {
+            System.out.println(
+                w.getDate() + " " +
+                w.getTimeSlot().getName() + " " +
+                w.getPosition().getName() + " " +
+                "\n不適合タグ:" + w.getNonconformTag() + ", 警告対象従業員ID:" + w.getWarningWorkers()
+            );
         }
     }
 
