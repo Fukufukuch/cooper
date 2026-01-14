@@ -12,9 +12,10 @@ public class Worker {
     private final Map<LocalDate, Set<Integer>> assignShiftTimeslotIds;
     private final Set<Integer> availablePositionIds;
     private final Set<Integer> nonconformTags;
+    private final Option option;
 
     public Worker(int id, boolean hasAuthority, int monthlyWorkMinutes, int totalWorkMinutes, 
-                  Map<LocalDate, Set<Integer>> assignShiftTimeslotIds, Set<Integer> availablePositionIds, Set<Integer> nonconformTags) {
+                  Map<LocalDate, Set<Integer>> assignShiftTimeslotIds, Set<Integer> availablePositionIds, Set<Integer> nonconformTags, Option option) {
         //入力情報
         this.id = id;                                           //労働者ID
         this.hasAuthority = hasAuthority;                       //権限者か
@@ -23,6 +24,7 @@ public class Worker {
         this.assignShiftTimeslotIds = assignShiftTimeslotIds;   //シフト希望情報
         this.availablePositionIds = availablePositionIds;       //入れるポジションのID
         this.nonconformTags = nonconformTags;                   //不適合タグ
+        this.option = option;                                   //オプション情報
 
         //入力参照情報
         this.dailyWorkMinutes = 0;                              //日労働時間
@@ -80,7 +82,7 @@ public class Worker {
 
     // 新人フラグ更新メソッド
     public void checkIsNewcomer() {
-        if (this.totalWorkMinutes >= 3000) { //新人フラグの更新（累計労働時間50時間）
+        if (this.totalWorkMinutes >= this.option.getNewcomerThresholdMinutes()) { //新人フラグの更新（累計労働時間50時間）
             this.isNewcomer = false;
         } else {
             this.isNewcomer = true;

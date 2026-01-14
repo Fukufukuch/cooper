@@ -6,17 +6,16 @@ import java.util.Map;
 import java.util.Set;
 
 public class DummyWorkerFactory {
-    private List<TimeSlot> timeSlots;
-    private List<Position> positions;
-    private List<Worker> workers;
-    private Option option;
-    private int days;
+    private final List<TimeSlot> timeSlots;
+    private final List<Position> positions;
+    private final List<Worker> workers;
+    private final Option option = new Option(8000, 720, 5000, 1, 1);
+    private final int days;
 
     public DummyWorkerFactory() {
         this.timeSlots = createTimeSlots();
         this.positions = createPositions();
         this.workers = createWorkers();
-        this.option = new Option(8000, 720, 1, 1); // 月労働時間上限設定(分)
         this.days = 7; // 生成期間設定
     }
 
@@ -40,22 +39,21 @@ public class DummyWorkerFactory {
         return days;
     }
 
-    public static List<Worker> createWorkers() {
+    public List<Worker> createWorkers() {
         List<Worker> workers = new ArrayList<>();
 
-        workers.add(createWorker1());
-        workers.add(createWorker2());
-        workers.add(createWorker3());
-        workers.add(createWorker4());
-        workers.add(createWorker5());
-        workers.add(createWorker6());
-        workers.add(createWorker7());
-        workers.add(createWorker8());
-        workers.add(createWorker9());
-        workers.add(createWorker10());
-        workers.add(createWorker11());
-        workers.add(createWorker12());
-
+        workers.add(createWorker1(this.option));
+        workers.add(createWorker2(this.option));
+        workers.add(createWorker3(this.option));
+        workers.add(createWorker4(this.option));
+        workers.add(createWorker5(this.option));
+        workers.add(createWorker6(this.option));
+        workers.add(createWorker7(this.option));
+        workers.add(createWorker8(this.option));
+        workers.add(createWorker9(this.option));
+        workers.add(createWorker10(this.option));
+        workers.add(createWorker11(this.option));
+        workers.add(createWorker12(this.option));
         return workers;
     }
 
@@ -77,7 +75,7 @@ public class DummyWorkerFactory {
         return list;
     }
 
-    private static Worker createWorker1() {
+    private static Worker createWorker1(Option option) {
         Map<LocalDate, Set<Integer>> prefs = new HashMap<>();
         prefs.put(LocalDate.of(2026, 1, 5), Set.of(2, 3, 4));           // 月：14-23.5
         prefs.put(LocalDate.of(2026, 1, 6), Set.of());                  // 火：休暇
@@ -94,11 +92,12 @@ public class DummyWorkerFactory {
             25000,
             prefs,
             Set.of(0, 1),
-            Set.of()
+            Set.of(),
+            option
         );
     }
 
-    private static Worker createWorker2() {
+    private static Worker createWorker2(Option option) {
         Map<LocalDate, Set<Integer>> prefs = new HashMap<>();
         prefs.put(LocalDate.of(2026, 1, 5), Set.of());               // 月：休暇
         prefs.put(LocalDate.of(2026, 1, 6), Set.of(0, 1, 2, 3));     // 火：6-20
@@ -115,11 +114,12 @@ public class DummyWorkerFactory {
             30000,
             prefs,
             Set.of(0, 1),
-            Set.of()
+            Set.of(),
+            option
         );
     }
 
-    private static Worker createWorker3() {
+    private static Worker createWorker3(Option option) {
         Map<LocalDate, Set<Integer>> prefs = new HashMap<>();
         prefs.put(LocalDate.of(2026, 1, 5), Set.of(0, 1, 2));        // 月：6-18
         prefs.put(LocalDate.of(2026, 1, 6), Set.of(0, 1, 2));        // 火：6-18
@@ -136,11 +136,12 @@ public class DummyWorkerFactory {
             20000,
             prefs,
             Set.of(0),
-            Set.of()
+            Set.of(),
+            option
         );
     }
 
-    private static Worker createWorker4() {
+    private static Worker createWorker4(Option option) {
         Map<LocalDate, Set<Integer>> prefs = new HashMap<>();
         prefs.put(LocalDate.of(2026, 1, 5), Set.of());                  // 月：休暇
         prefs.put(LocalDate.of(2026, 1, 6), Set.of(4));             // 火：20-23.5
@@ -154,14 +155,15 @@ public class DummyWorkerFactory {
             4,
             false,
             300, 
-            4700,
+            3000,
             prefs,
             Set.of(1),
-            Set.of()
+            Set.of(),
+            option
         );
     }
 
-    private static Worker createWorker5() {
+    private static Worker createWorker5(Option option) {
         Map<LocalDate, Set<Integer>> prefs = new HashMap<>();
         prefs.put(LocalDate.of(2026, 1, 5), Set.of());                  // 月：休暇
         prefs.put(LocalDate.of(2026, 1, 6), Set.of());                  // 火：休暇
@@ -178,11 +180,12 @@ public class DummyWorkerFactory {
             7000,
             prefs,
             Set.of(0, 1),
-            Set.of(0)
+            Set.of(0),
+            option
         );
     }
 
-    private static Worker createWorker6() {
+    private static Worker createWorker6(Option option) {
         Map<LocalDate, Set<Integer>> prefs = new HashMap<>();
         prefs.put(LocalDate.of(2026, 1, 5), Set.of(2, 3));              // 月：14-20
         prefs.put(LocalDate.of(2026, 1, 6), Set.of(2, 3));              // 火：14-20
@@ -199,17 +202,18 @@ public class DummyWorkerFactory {
             12000,
             prefs,
             Set.of(1),     // キッチン専属
-            Set.of()
+            Set.of(),
+            option
         );
     }
 
-    private static Worker createWorker7() {
+    private static Worker createWorker7(Option option) {
         Map<LocalDate, Set<Integer>> prefs = new HashMap<>();
-        prefs.put(LocalDate.of(2026, 1, 5), Set.of(1, 2));              // 月：9-17
-        prefs.put(LocalDate.of(2026, 1, 6), Set.of(1, 2));              // 火：9-17
-        prefs.put(LocalDate.of(2026, 1, 7), Set.of(1, 2));              // 水：9-17
-        prefs.put(LocalDate.of(2026, 1, 8), Set.of(1, 2));              // 木：9-17
-        prefs.put(LocalDate.of(2026, 1, 9), Set.of(1, 2));              // 金：9-17
+        prefs.put(LocalDate.of(2026, 1, 5), Set.of(1, 2));              // 月：9-18
+        prefs.put(LocalDate.of(2026, 1, 6), Set.of(1, 2));              // 火：9-18
+        prefs.put(LocalDate.of(2026, 1, 7), Set.of(1, 2));              // 水：9-18
+        prefs.put(LocalDate.of(2026, 1, 8), Set.of(1, 2));              // 木：9-18
+        prefs.put(LocalDate.of(2026, 1, 9), Set.of(1, 2));              // 金：9-18
         prefs.put(LocalDate.of(2026, 1, 10), Set.of());                 // 土：休暇
         prefs.put(LocalDate.of(2026, 1, 11), Set.of());                 // 日：休暇
 
@@ -220,11 +224,12 @@ public class DummyWorkerFactory {
             18000,
             prefs,
             Set.of(0, 1),       // 両対応
-            Set.of(0)       // レジ優先（仮仕様）
+            Set.of(0),     // レジ優先（仮仕様）
+            option
         );
     }
 
-    private static Worker createWorker8() {
+    private static Worker createWorker8(Option option) {
         Map<LocalDate, Set<Integer>> prefs = new HashMap<>();
         prefs.put(LocalDate.of(2026, 1, 5), Set.of(3, 4));              // 月：18-23.5
         prefs.put(LocalDate.of(2026, 1, 6), Set.of(3, 4));              // 火：18-23.5
@@ -241,11 +246,12 @@ public class DummyWorkerFactory {
             27000,
             prefs,
             Set.of(0),   // キッチン
-            Set.of()
+            Set.of(1),
+            option
         );
     }
 
-    private static Worker createWorker9() {
+    private static Worker createWorker9(Option option) {
         Map<LocalDate, Set<Integer>> prefs = new HashMap<>();
         prefs.put(LocalDate.of(2026, 1, 5), Set.of(4));                  // 月：20-23.5
         prefs.put(LocalDate.of(2026, 1, 6), Set.of(3, 4));                  // 火：18-23.5
@@ -262,11 +268,12 @@ public class DummyWorkerFactory {
             5000,    // 上限高
             prefs,
             Set.of(0, 1),
-            Set.of()
+            Set.of(1),
+            option
         );
     }
 
-    private static Worker createWorker10() {
+    private static Worker createWorker10(Option option) {
         Map<LocalDate, Set<Integer>> prefs = new HashMap<>();
         prefs.put(LocalDate.of(2026, 1, 5), Set.of(0));                  // 月：6-9
         prefs.put(LocalDate.of(2026, 1, 6), Set.of(1));                  // 火：9-14
@@ -283,11 +290,12 @@ public class DummyWorkerFactory {
             24000,
             prefs,
             Set.of(1),
-            Set.of()
+            Set.of(),
+            option
         );
     }
 
-    private static Worker createWorker11() {
+    private static Worker createWorker11(Option option) {
         Map<LocalDate, Set<Integer>> prefs = new HashMap<>();
         prefs.put(LocalDate.of(2026, 1, 5), Set.of());                  // 月：休暇
         prefs.put(LocalDate.of(2026, 1, 6), Set.of());                  // 火：休暇
@@ -304,11 +312,12 @@ public class DummyWorkerFactory {
             7000,
             prefs,
             Set.of(0, 1),
-            Set.of(0)
+            Set.of(0, 1),
+            option
         );
     }
 
-    private static Worker createWorker12() {
+    private static Worker createWorker12(Option option) {
         Map<LocalDate, Set<Integer>> prefs = new HashMap<>();
         prefs.put(LocalDate.of(2026, 1, 5), Set.of(1, 2, 3));                   // 月：9-20
         prefs.put(LocalDate.of(2026, 1, 6), Set.of(3));                     // 火：18-20
@@ -322,10 +331,11 @@ public class DummyWorkerFactory {
             12,
             true,
             1500, 
-            7000,
+            15000,
             prefs,
             Set.of(0, 1),
-            Set.of()
+            Set.of(),
+            option
         );
     }
 }

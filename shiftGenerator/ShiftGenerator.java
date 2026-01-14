@@ -67,8 +67,8 @@ public class ShiftGenerator {
 
                     // タグ不整合チェック
                     for (int set : extractNonconformTags(workers)) {
-                        if (isNonconformTagAssigned(slotMap, workers, set)) {
-                            addWarningSlot(currentDate, currentSlot, currentPosition, set, hasNonconformTagWorkersList(slotMap, workers, set), WarningType.NONCONFORM_TAG);
+                        if (isNonconformTagAssigned(shiftWorkerList, workers, set)) {
+                            addWarningSlot(currentDate, currentSlot, currentPosition, set, hasNonconformTagWorkersList(shiftWorkerList, workers, set), WarningType.NONCONFORM_TAG);
                         }
                     }
                 }
@@ -269,26 +269,21 @@ public class ShiftGenerator {
     }
 
     // 不適合タグ割当確認メソッド
-    public static boolean isNonconformTagAssigned(Map<Position, List<Integer>> slotMap, List<Worker> workers, int nonconformTag) {
-        if (hasNonconformTagWorkersList(slotMap, workers, nonconformTag).size() > 1) return true;
+    public static boolean isNonconformTagAssigned(List<Integer> shiftWorkerList, List<Worker> workers, int nonconformTag) {
+        if (hasNonconformTagWorkersList(shiftWorkerList, workers, nonconformTag).size() > 1) return true;
         else return false;
     }
 
     // 不適合タグ該当従業員リスト取得メソッド
-    public static List<Integer> hasNonconformTagWorkersList(Map<Position, List<Integer>> slotMap, List<Worker> workers, int nonconformTag) {
+    public static List<Integer> hasNonconformTagWorkersList(List<Integer> shiftWorkerList, List<Worker> workers, int nonconformTag) {
         List<Integer> result = new ArrayList<>();
 
-        // slot 内に割り当てられた ID を一意に集める
-        Set<Integer> assignedIds = new HashSet<>();
-        for (List<Integer> ids : slotMap.values()) {
-            assignedIds.addAll(ids);
-        }
-
-        // その ID に対応する worker だけを見る
-        for (Worker w : workers) {
-            if (assignedIds.contains(w.getId())
-                    && w.getNonconformTags().contains(nonconformTag)) {
-                result.add(w.getId());
+        for (int id : shiftWorkerList) {
+            for (Worker w : workers) {
+                if (w.getId() == id && w.getNonconformTags().contains(nonconformTag)) {
+                    result.add(id);
+                    break;
+                }
             }
         }
         return result;
