@@ -1,5 +1,6 @@
 enum ShortageType {
-    AUTHORITY,
+    SLOT_AUTHORITY,
+    POSITION_AUTHORITY,
     WORKER, 
     SENIOR, 
 }

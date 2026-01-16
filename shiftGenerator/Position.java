@@ -3,14 +3,14 @@ public class Position {
     private final String name;
     private final int minWorkers;
     private final int maxWorkers;
-    private final boolean requiresAuthority;
+    private final int requireAuthorityWorkers;
 
-    public Position(int id, String name, int minWorkers, int maxWorkers, boolean requiresAuthority) {
+    public Position(int id, String name, int minWorkers, int maxWorkers, int requireAuthorityWorkers) {
         this.id = id;                               //ID番号
         this.name = name;                           //スロット名
         this.minWorkers = minWorkers;               //最少人数
         this.maxWorkers = maxWorkers;               //最大人数
-        this.requiresAuthority = requiresAuthority; //責任者の有無
+        this.requireAuthorityWorkers = requireAuthorityWorkers; //責任者の人数
     }
 
     public int getId() {
@@ -29,7 +29,7 @@ public class Position {
         return maxWorkers;
     }
 
-    public boolean isRequiresAuthority() {
-        return requiresAuthority;
+    public int getRequireAuthorityWorkers() {
+        return requireAuthorityWorkers;
     }
 }

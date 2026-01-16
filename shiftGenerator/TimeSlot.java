@@ -6,15 +6,15 @@ public class TimeSlot {
     private final int workMinutes;
     private final int minExtraWorkers;
     private final int maxExtraWorkers;
-    private final boolean requiresAuthority;
+    private final int requireAuthorityWorkers;
 
-    public TimeSlot(int id, String name, int startMinute, int endMinute, int minExtraWorkers, int maxExtraWorkers, boolean requiresAuthority) {
+    public TimeSlot(int id, String name, int startMinute, int endMinute, int minExtraWorkers, int maxExtraWorkers, int requireAuthorityWorkers) {
         this.id = id;
         this.name = name;
         this.startMinute = startMinute;
         this.endMinute = endMinute;
         this.workMinutes = endMinute - startMinute;
-        this.requiresAuthority = requiresAuthority;
+        this.requireAuthorityWorkers = requireAuthorityWorkers;
         this.minExtraWorkers = minExtraWorkers;
         this.maxExtraWorkers = maxExtraWorkers;
     }
@@ -47,7 +47,7 @@ public class TimeSlot {
         return maxExtraWorkers;
     }
 
-    public boolean isRequiresAuthority() {
-        return requiresAuthority;
+    public int getRequireAuthorityWorkers() {
+        return requireAuthorityWorkers;
     }
 }

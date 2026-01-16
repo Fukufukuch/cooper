@@ -9,14 +9,14 @@ public class DummyWorkerFactory {
     private final List<TimeSlot> timeSlots;
     private final List<Position> positions;
     private final List<Worker> workers;
-    private final Option option = new Option(8000, 720, 5000, 1, 1);
+    private final Option option = new Option(8000, 720, 5000, 1);
     private final int days;
 
     public DummyWorkerFactory() {
         this.timeSlots = createTimeSlots();
         this.positions = createPositions();
         this.workers = createWorkers();
-        this.days = 7; // 生成期間設定
+        this.days = 2; // 生成期間設定
     }
 
     public List<TimeSlot> getTimeSlots() {
@@ -59,19 +59,19 @@ public class DummyWorkerFactory {
 
     private static List<TimeSlot> createTimeSlots() {
         List<TimeSlot> list = new ArrayList<>();
-        list.add(new TimeSlot(0, "早番", 360, 540, -1, -1, true));    //6-9h
-        list.add(new TimeSlot(1, "午前", 540, 840, 0, 0, false));    //9-14h
-        list.add(new TimeSlot(2, "中番", 840, 1080, -1, -1, false));   //14-18h
-        list.add(new TimeSlot(3, "午後", 1080, 1200, 1, 1, false));  //18-20h
-        list.add(new TimeSlot(4, "遅番", 1200, 1410, -1, -1, true));  //20-23.5h
+        list.add(new TimeSlot(0, "早番", 360, 540, -1, -1, 2));    //6-9h
+        list.add(new TimeSlot(1, "午前", 540, 840, 0, 0, 1));    //9-14h
+        list.add(new TimeSlot(2, "中番", 840, 1080, -1, -1, 1));   //14-18h
+        list.add(new TimeSlot(3, "午後", 1080, 1200, 1, 1, 1));  //18-20h
+        list.add(new TimeSlot(4, "遅番", 1200, 1410, -1, -1, 2));  //20-23.5h
         return list;
     }
 
     private static List<Position> createPositions() {
         List<Position> list = new ArrayList<>();
         
-        list.add(new Position(0, "レジ", 1, 2, true));
-        list.add(new Position(1, "キッチン", 2, 3, false));
+        list.add(new Position(0, "レジ", 1, 2, 1));
+        list.add(new Position(1, "キッチン", 2, 3, 0));
         return list;
     }
 
