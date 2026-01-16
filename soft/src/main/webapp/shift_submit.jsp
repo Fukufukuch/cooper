@@ -387,14 +387,34 @@
     }
 
     function submitShifts() {
-        if (shiftRequests.length === 0) {
-            alert("提出するシフト希望がありません");
-            return;
-        }
+      if (shiftRequests.length === 0) {
+          alert("提出するシフト希望がありません");
+          return;
+      }
 
-        console.log("送信データ:", JSON.stringify(shiftRequests));
-        alert(shiftRequests.length + "件のシフトを送信しました（モック）");
+      fetch("submitShift", {
+          method: "POST",
+          headers: {
+              "Content-Type": "application/json"
+          },
+          body: JSON.stringify(shiftRequests)
+      })
+      .then(response => response.json())
+      .then(data => {
+          if (data.status === "success") {
+              alert("シフト希望を提出しました！");
+              shiftRequests = [];
+              renderShiftList();
+          } else {
+              alert("送信に失敗しました");
+          }
+      })
+      .catch(error => {
+          console.error("エラー:", error);
+          alert("通信エラーが発生しました");
+      });
     }
+
 </script>
 
 </body>
