@@ -16,7 +16,7 @@ public class DummyWorkerFactory {
         this.timeSlots = createTimeSlots();
         this.positions = createPositions();
         this.workers = createWorkers();
-        this.days = 2; // 生成期間設定
+        this.days = 7; // 生成期間設定
     }
 
     public List<TimeSlot> getTimeSlots() {

@@ -61,6 +61,7 @@ public class Main {
             return;
         }
         System.out.println("＜責任者未割当枠＞");
+        System.out.println("-----時間帯-----");
         boolean hasAuthorityShortageForSlot = shortages.stream().anyMatch(s -> s.getShortageType() == ShortageType.SLOT_AUTHORITY);
         if (!hasAuthorityShortageForSlot) {
             System.out.println("該当なし");
@@ -76,8 +77,9 @@ public class Main {
             }
         }
 
+        System.out.println("\n-----ポジション別-----");
         boolean hasAuthorityShortageForPosition = shortages.stream().anyMatch(s -> s.getShortageType() == ShortageType.POSITION_AUTHORITY);
-        if (!hasAuthorityShortageForSlot) {
+        if (!hasAuthorityShortageForPosition) {
             System.out.println("該当なし");
         } else {
             for (shortageSlot s : shortages) {

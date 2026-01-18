@@ -28,6 +28,7 @@ public class ShiftGenerator {
 
         for (int d = 0; d < days; d++) {
             LocalDate currentDate = firstDate.plusDays(d);
+            System.out.println(currentDate);
             Map<TimeSlot, Map<Position, List<Integer>>> dayMap = new LinkedHashMap<>();
             shift.put(currentDate, dayMap);
 
@@ -62,20 +63,73 @@ public class ShiftGenerator {
         return warningSlots;
     }
 
+    private void phase1_AuthorityForPos(TimeSlot currentSlot, LocalDate currentDate, Map<TimeSlot, Map<Position, List<Integer>>> dayMap, Map<Position, List<Integer>> slotMap) {
+        List<Position> minSortedPositions = sortListByMinWorkers(positions);
+        for (Position currentPosition : minSortedPositions) {
+            List<Integer> shiftWorkerList = slotMap.computeIfAbsent(currentPosition, k -> new ArrayList<>());
+
+            int minRequired = minWorkersRequired(currentPosition, currentSlot);
+            int authorityForPos = countAuthorityAssignedByPosition(currentPosition, slotMap, workers);
+
+            List<Worker> hasAuthorityCandidates = workers.stream()
+                    .filter(w -> w.isHasAuthority())
+                    .filter(w -> canAssign(currentDate, w, currentPosition, currentSlot, dayMap, shiftWorkerList, option))
+                    .sorted(Comparator.comparingInt((Worker w) -> w.getAvailablePositionIds().size()) // 対応ポジション数昇順
+                        .thenComparingInt((Worker w) -> w.getMonthlyWorkMinutes()))
+                    .toList();
+
+            for (Worker w : hasAuthorityCandidates) {
+                if (shiftWorkerList.size() >= minRequired || authorityForPos >= currentPosition.getRequireAuthorityWorkers()) break; // 最低人数超過時割り当て終了
+                assign(w, currentSlot, shiftWorkerList); // 労働者割当
+                authorityForPos++;
+                System.out.println("ポジション : " + currentPosition.getName() + " Phase1(ポジション別責任者割当)");
+            }    
+        }
+    }
+
+    private void AuthorityForSlot(TimeSlot currentSlot, LocalDate currentDate, Map<TimeSlot, Map<Position, List<Integer>>> dayMap, Map<Position, List<Integer>> slotMap) {
+        List<Position> minSortedPositions = sortListByMinWorkers(positions);
+
+        int authorityForSlot = countAuthorityAssignedBySlot(currentSlot, slotMap, workers);
+
+        List<Worker> hasAuthorityCandidates = workers.stream()
+                .filter(w -> w.isHasAuthority())
+                .filter(w -> canAssign(currentDate, w, currentPosition, currentSlot, dayMap, shiftWorkerList, option))
+                .sorted(Comparator.comparingInt((Worker w) -> w.getAvailablePositionIds().size()) // 対応ポジション数昇順
+                    .thenComparingInt((Worker w) -> w.getMonthlyWorkMinutes()))
+                .toList();
+            
+        Set<Integer> assignedWorkerIdsInSlot = new HashSet<>();
+        for (List<Integer> ids : slotMap.values()) {
+            assignedWorkerIdsInSlot.addAll(ids);
+        }
+        
+        for (Position currentPosition : minSortedPositions) {
+            List<Integer> shiftWorkerList = slotMap.computeIfAbsent(currentPosition, k -> new ArrayList<>());
+
+            int minRequired = minWorkersRequired(currentPosition, currentSlot);
+
+            for (Worker w : hasAuthorityCandidates) {
+                if (shiftWorkerList.size() >= minRequired || authorityForSlot >= currentSlot.getRequireAuthorityWorkers()) break; // 最低人数超過時割り当て終了
+                assign(w, currentSlot, shiftWorkerList); // 労働者割当
+                authorityForSlot++;
+                System.out.println("ポジション : " + currentPosition.getName() + " Phase1(時間帯別責任者割当)");
+            }    
+        }
+    }
+
     // phase1:最少人数割当メソッド
     private void phase1_PosMin(TimeSlot currentSlot, LocalDate currentDate, Map<TimeSlot, Map<Position, List<Integer>>> dayMap, Map<Position, List<Integer>> slotMap) {
         List<Position> minSortedPositions = sortListByMinWorkers(positions); // ポジション最少必要人数昇順ソート
         for (Position currentPosition : minSortedPositions) {
             List<Integer> shiftWorkerList = slotMap.computeIfAbsent(currentPosition, k -> new ArrayList<>());
-
+            
             int required = minWorkersRequired(currentPosition, currentSlot); // 最少人数取得
 
             List<Worker> candidates = workers.stream()
                     .filter(w -> canAssign(currentDate, w, currentPosition, currentSlot, dayMap, shiftWorkerList, option)) //割り当て可能確認
-                    .sorted(Comparator.comparing((Worker w) -> needsAuthorityForPosition(currentPosition, slotMap, workers)
-                        && needsAuthorityForSlot(currentSlot, slotMap, workers) && w.isHasAuthority() ? 0 : 1) // 権限者優先
-                    .thenComparingInt((Worker w) -> w.getAvailablePositionIds().size()) // 対応ポジション数昇順
-                    .thenComparingInt((Worker w) -> w.getMonthlyWorkMinutes())) // 月労働時間昇順
+                    .sorted(Comparator.comparingInt((Worker w) -> w.getAvailablePositionIds().size()) // 対応ポジション数昇順
+                        .thenComparingInt((Worker w) -> w.getMonthlyWorkMinutes())) // 月労働時間昇順
                     .toList();
 
             for (Worker w : candidates) {
@@ -175,7 +229,7 @@ public class ShiftGenerator {
                 if (isNonconformTagAssigned(shiftWorkerList, workers, set)) {
                     addWarningSlot(currentDate, currentSlot, currentPosition, set, hasNonconformTagWorkersList(shiftWorkerList, workers, set), WarningType.NONCONFORM_TAG);
                 }
-            }  
+            }
         }
     }
 
@@ -268,11 +322,11 @@ public class ShiftGenerator {
     // 時間帯責任者割当数カウントメソッド
     public static int countAuthorityAssignedBySlot(Map<Position, List<Integer>> slotMap, List<Worker> workers) {
         int count = 0;
-        for (List<Integer> ids : slotMap.values()) {
+        Map<Integer, Worker> workerMap = workers.stream().collect(Collectors.toMap(Worker::getId, w -> w));
+        for (List<Integer> ids: slotMap.values()) {
             for (int id : ids) {
-                for (Worker w : workers) {
-                    if (w.getId() == id && w.isHasAuthority()) count++;
-                }
+                Worker w = workerMap.get(id);
+                if (w != null && w.isHasAuthority()) count++;
             }
         }
         return count;
@@ -281,10 +335,10 @@ public class ShiftGenerator {
     // ポジション別責任者割り当て数カウントメソッド
     public static int countAuthorityAssignedByPosition(Position currentPosition, Map<Position, List<Integer>> slotMap, List<Worker> workers) {
         int count = 0;
+        Map<Integer, Worker> workerMap = workers.stream().collect(Collectors.toMap(Worker::getId, w -> w));
         for (int id : slotMap.getOrDefault(currentPosition, List.of())) {
-            for (Worker w : workers) {
-                if (w.getId() == id && w.isHasAuthority()) count++;
-            }
+            Worker w = workerMap.get(id);
+            if (w != null && w.isHasAuthority()) count++;
         }
         return count;
     }
