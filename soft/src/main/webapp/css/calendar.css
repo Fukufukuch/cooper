@@ -1,0 +1,74 @@
+body {
+    font-family: "Segoe UI", sans-serif;
+    background: #f4f6ff;
+    margin: 0;
+    padding: 20px;
+}
+
+.container {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 20px;
+}
+
+h1 {
+    margin: 0;
+}
+
+h2 {
+    margin-top: 10px;
+    color: #555;
+}
+
+.month-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 20px 0;
+}
+
+.month-nav a {
+    text-decoration: none;
+    color: #0066cc;
+    font-weight: bold;
+}
+
+.calendar {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 8px;
+}
+
+.calendar th {
+    text-align: center;
+    color: #555;
+}
+
+.calendar td {
+    background: #fff;
+    border-radius: 8px;
+    height: 100px;
+    vertical-align: top;
+    box-shadow: 0 0 4px rgba(0,0,0,0.1);
+}
+
+.calendar td.empty {
+    background: transparent;
+    box-shadow: none;
+}
+
+.calendar td.day {
+    padding: 6px;
+}
+
+.date {
+    font-weight: bold;
+}
+
+.sat {
+    color: #0066ff;
+}
+
+.sun {
+    color: #ff4444;
+}
