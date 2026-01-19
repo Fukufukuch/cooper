@@ -1,4 +1,6 @@
-jp\ac\kochi\tech\AdminShiftServlet.class
-jp\ac\kochi\tech\AuthLoginModule.class
+jp\ac\kochi\tech\Admin.class
+jp\ac\kochi\tech\Logout.class
+jp\ac\kochi\tech\DBconfig.class
 jp\ac\kochi\tech\sqlSelectTest.class
 jp\ac\kochi\tech\HelloServlet.class
+jp\ac\kochi\tech\Login.class

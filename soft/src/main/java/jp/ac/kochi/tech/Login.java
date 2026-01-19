@@ -1,11 +1,11 @@
 package jp.ac.kochi.tech;
 
-import jakarta.io.FileNotFoundException;
-import jakarta.sql.Connection;
-import jakarta.sql.DriverManager;
-import jakarta.sql.PreparedStatement;
-import jakarta.sql.ResultSet;
-import jakarta.sql.SQLException;
+import java.io.FileNotFoundException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 import jp.ac.kochi.tech.DBconfig;
 import jp.ac.kochi.tech.Admin;
