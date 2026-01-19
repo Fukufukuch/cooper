@@ -12,7 +12,7 @@ import jp.ac.kochi.tech.Admin;
 
 public class Login {
 
-	public Admin check(String admin_id, String password) throws FileNotFoundException {
+	public Admin check(String userID, String password) throws FileNotFoundException {
 
 		System.out.println("★★ check() 開始 ★★");
 
@@ -24,7 +24,7 @@ public class Login {
 
 		// 実行SQL
 		String login_sql = "select * from admin_tb "
-				+ "where admin_id = ? and password = ?;";
+				+ "where userID = ? and password = ?;";
 		// 管理者のオブジェクトを作成
 		Admin admin = new Admin();
 
