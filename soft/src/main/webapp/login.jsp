@@ -10,7 +10,7 @@
 </head>
 <body>
 	<div class="mx-auto" style="width: 300px;">
-		<h1 class="mb-3" style="text-align: center">管理者ログイン画面</h1>
+		<h1 class="mb-3" style="text-align: center">ログイン画面</h1>
 		<form action="${pageContext.request.contextPath}/LoginServlet" method="post">
 		  <div class="mb-3">
 		    <label for="adminID" class="form-label">管理者ID</label>

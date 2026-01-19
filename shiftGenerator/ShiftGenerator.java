@@ -11,8 +11,7 @@ public class ShiftGenerator {
 
     private List<shortageSlot> shortageSlots = new ArrayList<>();
 
-    public ShiftGenerator(int days, LocalDate firstDate, List<TimeSlot> timeSlots,
-                          List<Position> positions, List<Worker> workers, Option option) {
+    public ShiftGenerator(int days, LocalDate firstDate, List<TimeSlot> timeSlots, List<Position> positions, List<Worker> workers, Option option) {
         this.days = days;
         this.firstDate = firstDate;
         this.timeSlots = timeSlots;
@@ -24,7 +23,7 @@ public class ShiftGenerator {
     public Map<LocalDate, Map<TimeSlot, Map<Position, List<Integer>>>> generate() {
         Map<LocalDate, Map<TimeSlot, Map<Position, List<Integer>>>> shift = new LinkedHashMap<>();
 
-        List<Position> minSortedPositions = sortListByMinWorkers(positions);
+        List<Position> maxSortedPositions = sortListByMaxWorkers(positions);
         List<TimeSlot> minSortedTimeSlots = sortListByMinExtraWorkers(timeSlots);
 
         for (int d = 0; d < days; d++) {
@@ -36,49 +35,33 @@ public class ShiftGenerator {
                 Map<Position, List<Integer>> slotMap = new LinkedHashMap<>();
                 dayMap.put(currentSlot, slotMap);
 
-                for (Position currentPosition : minSortedPositions) {
-                    List<Integer> shiftWorkerList = new ArrayList<>();
+                // phase1:最小人数・責任者割当
+                assignMinWorkers(positions, workers, currentSlot, currentDate, dayMap, slotMap, option);
+
+                for (Position currentPosition : maxSortedPositions) {
+                    List<Integer> shiftWorkerList = slotMap.computeIfAbsent(currentPosition, k -> new ArrayList<>());
                     slotMap.put(currentPosition, shiftWorkerList);
 
-                    List<Worker> assignWorkers = assignWorkers(currentDate, workers, currentPosition, currentSlot, dayMap, shiftWorkerList, option);
-                    assignWorkers = sortListByMonthMinutes(assignWorkers);
+                    // phase2:新人制約割当
+                    assignUnnewcomerIfPossible(workers, shiftWorkerList, currentPosition, currentSlot, currentDate, dayMap, option);
 
-                    // 責任者を先に割り当てる
-                    if (isAuthorityRequired(currentPosition, currentSlot) && !hasAuthorityAssigned(slotMap, workers)) {
-                        int needed = option.getRequiredAuthorityWorkers();
-                        int count = 0;
-
-                        for (Worker w : extractAuthorityWorkers(assignWorkers)) {
-                            if (shiftWorkerList.size() >= maxWorkersRequired(currentPosition, currentSlot)) break;
-                            if (!canAssign(currentDate, w, currentPosition, currentSlot, dayMap, shiftWorkerList, option)) continue;
-
-                            shiftWorkerList.add(w.getId());
-                            addProcess(w, currentSlot);
-                            count++;
-
-                            if (count >= needed) break;
-                        }
-                    }
-
-                    // 通常割当
-                    for (Worker w : assignWorkers) {
-                        if (shiftWorkerList.size() >= maxWorkersRequired(currentPosition, currentSlot)) break;
-                        if (!canAssign(currentDate, w, currentPosition, currentSlot, dayMap, shiftWorkerList, option)) continue;
-
-                        shiftWorkerList.add(w.getId());
-                        addProcess(w, currentSlot);
-                    }
+                    // phase3:通常割当
+                    assignNormal(workers, shiftWorkerList, currentPosition, currentSlot, currentDate, dayMap, option);
 
                     // 管理者不足チェック
                     int authorityCount = countAuthorityAssigned(slotMap, workers);
-                    if (isAuthorityRequired(currentPosition, currentSlot)
-                            && authorityCount < option.getRequiredAuthorityWorkers()) {
-                        addShortageSlot(currentDate, currentSlot, currentPosition, option.getRequiredAuthorityWorkers(), countAuthorityAssigned(slotMap, assignWorkers), false);
+                    if (isAuthorityRequired(currentPosition, currentSlot) && authorityCount < option.getRequiredAuthorityWorkers()) {
+                        addShortageSlot(currentDate, currentSlot, currentPosition, option.getRequiredAuthorityWorkers(), countAuthorityAssigned(slotMap, workers), false, true, true);
                     }
 
                     // 人数不足チェック
                     if (shiftWorkerList.size() < minWorkersRequired(currentPosition, currentSlot)) {
-                        addShortageSlot(currentDate, currentSlot, currentPosition, minWorkersRequired(currentPosition, currentSlot), shiftWorkerList.size(), true);
+                        addShortageSlot(currentDate, currentSlot, currentPosition, minWorkersRequired(currentPosition, currentSlot), shiftWorkerList.size(), true, false, true);
+                    }
+
+                    // 先輩不足チェック
+                    if (hasSeniorRequired(slotMap, workers)) {
+                        addShortageSlot(currentDate, currentSlot, currentPosition, option.getRequiredSeniorWorkers(), countSeniorAssigned(slotMap, workers), true, true, false);
                     }
                 }
             }
@@ -92,10 +75,87 @@ public class ShiftGenerator {
         return shortageSlots;
     }
 
+    // 管理者割当メソッド
+    private void assignAuthority(List<Worker> assignWorkers, List<Integer> shiftWorkerList, Position currentPosition, TimeSlot currentSlot, LocalDate currentDate, Map<TimeSlot, Map<Position, List<Integer>>> dayMap, Option option) {
+        int needed = option.getRequiredAuthorityWorkers();
+        int count = 0;
+
+        for (Worker w : extractAuthorityWorkers(assignWorkers)) {
+            if (shiftWorkerList.size() >= maxWorkersRequired(currentPosition, currentSlot)) break;
+            if (!canAssign(currentDate, w, currentPosition, currentSlot, dayMap, shiftWorkerList, option)) continue;
+
+            shiftWorkerList.add(w.getId());
+            addProcess(w, currentSlot);
+            count++;
+
+            if (count >= needed) break;
+        }
+    }
+
+    // 最少人数割当メソッド
+    private void assignMinWorkers(List<Position> positions, List<Worker> workers, TimeSlot currentSlot, LocalDate currentDate, Map<TimeSlot, Map<Position, List<Integer>>> dayMap, Map<Position, List<Integer>> slotMap, Option option) {
+        List<Position> minSortedPositions = sortListByMinWorkers(positions);
+        for (Position currentPosition : minSortedPositions) {
+            List<Integer> shiftWorkerList = slotMap.computeIfAbsent(currentPosition, k -> new ArrayList<>());
+
+            List<Worker> assignWorkers = assignWorkers(currentDate, workers, currentPosition, currentSlot, dayMap, shiftWorkerList, option);
+            assignWorkers = sortListByMonthMinutes(assignWorkers);
+            assignWorkers = sortListByAvailablePositionsCount(assignWorkers);
+
+            // 管理者割当
+            if (isAuthorityRequired(currentPosition, currentSlot)) {
+                assignAuthority(assignWorkers, shiftWorkerList, currentPosition, currentSlot, currentDate, dayMap, option);
+                if (shiftWorkerList.size() > currentPosition.getMinWorkers()) continue;
+            }
+
+            // 最少人数割当
+            for (Worker w : assignWorkers) {
+                if (shiftWorkerList.size() >= minWorkersRequired(currentPosition, currentSlot)) break;
+                if (!canAssign(currentDate, w, currentPosition, currentSlot, dayMap, shiftWorkerList, option)) continue;
+
+                shiftWorkerList.add(w.getId());
+                addProcess(w, currentSlot);
+            }
+        }
+    }
+
+    // 新人制約割当メソッド
+    private void assignUnnewcomerIfPossible(List<Worker> workers, List<Integer> shiftWorkerList, Position currentPosition, TimeSlot currentSlot, LocalDate currentDate, Map<TimeSlot, Map<Position, List<Integer>>> dayMap, Option option) {
+        List<Worker> assignWorkers = assignWorkers(currentDate, workers, currentPosition, currentSlot, dayMap, shiftWorkerList, option);
+        assignWorkers = sortListByMonthMinutes(assignWorkers);
+        assignWorkers = sortListByAvailablePositionsCount(assignWorkers);
+
+        if (assignWorkers.isEmpty()) return;
+        if (!hasSeniorRequired(dayMap.get(currentSlot), workers)) return;
+
+        for (Worker w : assignWorkers) {
+            if (!w.isNewcomer()) continue;
+            if (!canAssign(currentDate, w, currentPosition, currentSlot, dayMap, shiftWorkerList, option)) continue;
+
+            shiftWorkerList.add(w.getId());
+            addProcess(w, currentSlot);
+            break;
+        }
+    }
+
+    // 通常割当メソッド
+    private void assignNormal(List<Worker> workers, List<Integer> shiftWorkerList, Position currentPosition, TimeSlot currentSlot, LocalDate currentDate, Map<TimeSlot, Map<Position, List<Integer>>> dayMap, Option option) {
+        List<Worker> assignWorkers = assignWorkers(currentDate, workers, currentPosition, currentSlot, dayMap, shiftWorkerList, option);
+        assignWorkers = sortListByMonthMinutes(assignWorkers);
+        assignWorkers = sortListByAvailablePositionsCount(assignWorkers);
+
+        for (Worker w : assignWorkers) {
+            if (shiftWorkerList.size() >= maxWorkersRequired(currentPosition, currentSlot)) break;
+            if (!canAssign(currentDate, w, currentPosition, currentSlot, dayMap, shiftWorkerList, option)) continue;
+
+            shiftWorkerList.add(w.getId());
+            addProcess(w, currentSlot);
+        }
+    }
+
     // 不足枠追加メソッド
-    private void addShortageSlot(LocalDate date, TimeSlot slot, Position position,
-                                 int required, int assigned, boolean normalShortage) {
-        shortageSlots.add(new shortageSlot(date, slot, position, required, assigned, normalShortage));
+    private void addShortageSlot(LocalDate date, TimeSlot slot, Position position, int required, int assigned, boolean authorityShortage, boolean workerShortage, boolean seniorShortage) {
+        shortageSlots.add(new shortageSlot(date, slot, position, required, assigned, authorityShortage, workerShortage, seniorShortage));
     }
 
     // 最少必要人数取得メソッド
@@ -140,6 +200,24 @@ public class ShiftGenerator {
         return false;
     }
 
+    // 先輩必要判定メソッド
+    public static boolean hasSeniorRequired(Map<Position, List<Integer>> slotMap, List<Worker> workers) {
+        return countSeniorAssigned(slotMap, workers) == 0;
+    }
+
+    // 先輩割当数カウントメソッド
+    public static int countSeniorAssigned(Map<Position, List<Integer>> slotMap, List<Worker> workers) {
+        int count = 0;
+        for (List<Integer> ids : slotMap.values()) {
+            for (int id : ids) {
+                for (Worker w : workers) {
+                    if (w.getId() == id && !w.isNewcomer()) count++;
+                }
+            }
+        }
+        return count;
+    }
+
     // 管理者必要判定メソッド
     public static boolean isAuthorityRequired(Position position, TimeSlot timeSlot) {
         return position.isRequiresAuthority() || timeSlot.isRequiresAuthority();
@@ -179,10 +257,24 @@ public class ShiftGenerator {
         return list;
     }
 
+    // 対応ポジション数昇順ソートメソッド
+    public static List<Worker> sortListByAvailablePositionsCount(List<Worker> workers) {
+        List<Worker> list = new ArrayList<>(workers);
+        list.sort(Comparator.comparingInt(w -> w.getAvailablePositionIds().size()));
+        return list;
+    }
+
     // ポジション最少必要人数昇順ソートメソッド
     public static List<Position> sortListByMinWorkers(List<Position> positions) {
         List<Position> list = new ArrayList<>(positions);
         list.sort(Comparator.comparingInt(Position::getMinWorkers));
+        return list;
+    }
+
+    // ポジション最大必要人数昇順ソートメソッド
+    public static List<Position> sortListByMaxWorkers(List<Position> positions) {
+        List<Position> list = new ArrayList<>(positions);
+        list.sort(Comparator.comparingInt(Position::getMaxWorkers));
         return list;
     }
 
