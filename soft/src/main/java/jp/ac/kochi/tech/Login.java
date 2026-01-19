@@ -24,7 +24,7 @@ public class Login {
 
 		// 実行SQL
 		String login_sql = "select * from users "
-				+ "where userID = ? and password = ?;";
+				+ "where TRIM(userID) = ? and password = ?;";
 		// 管理者のオブジェクトを作成
 		Admin admin = new Admin();
 
@@ -50,7 +50,7 @@ public class Login {
 			System.out.println("★★ 本当にDB接続成功 ★★");
 
 			// 変数login_sqlの一番目の?に引数のuser_idをセット
-			stmt.setString(1, userID);
+			stmt.setString(1, userID.trim());
 			// 変数login_sqlの二番目の?に引数のpasswordをセット
 			stmt.setString(2, password);
 
@@ -61,7 +61,7 @@ public class Login {
 			// データベースから取得した値をAdminオブジェクトに格納
 			// 値がなければ、login_flag（false）のみ格納
 			if(rs.next()) {
-				admin.setId(rs.getInt("userID"));
+				admin.setUserID(rs.getString("userID").trim());
 				admin.setName(rs.getString("name"));
 				admin.setPassword(rs.getString("password"));
 				admin.setLogin_flag(true);
