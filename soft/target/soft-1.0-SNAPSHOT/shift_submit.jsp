@@ -197,6 +197,8 @@
           display: flex;
           flex-direction: column;
           gap: 4px;
+          font-size: 14px;
+          line-height: 1.4;
         }
 
         .shift-date {
