@@ -15,6 +15,8 @@ public class Login {
 	public Admin check(String userID, String password) throws FileNotFoundException {
 
 		System.out.println("★★ check() 開始 ★★");
+		System.out.println("受け取ったuserID: [" + userID + "]");
+		System.out.println("受け取ったpassword: [" + password + "]");
 
 		// データベースへの接続情報をプロパティファイルから取得
 		DBconfig db_info = new DBconfig();
@@ -24,7 +26,7 @@ public class Login {
 
 		// 実行SQL
 		String login_sql = "select * from users "
-				+ "where TRIM(userID) = ? and password = ?;";
+				+ "where userID = ? and password = ?;";
 		// 管理者のオブジェクトを作成
 		Admin admin = new Admin();
 
@@ -50,7 +52,7 @@ public class Login {
 			System.out.println("★★ 本当にDB接続成功 ★★");
 
 			// 変数login_sqlの一番目の?に引数のuser_idをセット
-			stmt.setString(1, userID.trim());
+			stmt.setString(1, userID);
 			// 変数login_sqlの二番目の?に引数のpasswordをセット
 			stmt.setString(2, password);
 
@@ -61,16 +63,26 @@ public class Login {
 			// データベースから取得した値をAdminオブジェクトに格納
 			// 値がなければ、login_flag（false）のみ格納
 			if(rs.next()) {
-				admin.setUserID(rs.getString("userID").trim());
-				admin.setName(rs.getString("name"));
-				admin.setPassword(rs.getString("password"));
-				admin.setLogin_flag(true);
+				String dbUserID = rs.getString("userID");
+				String dbName = rs.getString("name");
+				String dbPassword = rs.getString("password");
+				
 				System.out.println("★★ ヒットあり ★★");
-				//System.out.println("あどみんIDisなに？");
-				//System.out.println(rs.getInt("admin_id"));
+				System.out.println("DBから取得したuserID: [" + dbUserID + "]");
+				System.out.println("DBから取得したname: [" + dbName + "]");
+				System.out.println("DBから取得したpassword: [" + dbPassword + "]");
+				System.out.println("入力されたpassword: [" + password + "]");
+				System.out.println("パスワード一致: " + dbPassword.equals(password));
+				
+				admin.setUserID(dbUserID);
+				admin.setName(dbName);
+				admin.setPassword(dbPassword);
+				admin.setLogin_flag(true);
 			} else {
 				admin.setLogin_flag(false);
-				System.out.println("確定失敗でしぬぅ");
+				System.out.println("★★ マッチするレコードがありません ★★");
+				System.out.println("SQL: select * from users where userID = ? and password = ?");
+				System.out.println("パラメータ - userID: [" + userID + "], password: [" + password + "]");
 			}
 		} catch (SQLException e) {
 			System.out.println("データベースとの接続を閉じます");
