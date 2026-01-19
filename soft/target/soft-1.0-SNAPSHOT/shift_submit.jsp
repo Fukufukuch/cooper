@@ -197,8 +197,6 @@
           display: flex;
           flex-direction: column;
           gap: 4px;
-          font-size: 14px;
-          line-height: 1.4;
         }
 
         .shift-date {
@@ -353,6 +351,7 @@
     }
 
     function renderShiftList() {
+      console.log(shift);
         shiftList.innerHTML = "";
 
         if (shiftRequests.length === 0) {
@@ -369,12 +368,27 @@
                 ? "終日勤務可能"
                 : shift.startTime + " 〜 " + shift.endTime;
 
-            card.innerHTML =
+            /*card.innerHTML =
               '<div class="shift-info">' +
                 '<div class="shift-date">📅 ' + shift.date + '</div>' +
                 '<div class="shift-time">⏰ ' + timeText + '</div>' +
               '</div>' +
-              '<button class="delete-btn" onclick="removeShift(' + index + ')">🗑</button>';
+              '<button class="delete-btn" onclick="removeShift(' + index + ')">🗑</button>';*/
+
+              const dateDiv = document.createElement("div");
+              dateDiv.className = "shift-date";
+              dateDiv.textContent = shift.date;
+
+              const timeDiv = document.createElement("div");
+              timeDiv.className = "shift-time";
+              timeDiv.textContent = timeText;
+
+              const info = document.createElement("div");
+              info.className = "shift-info";
+              info.appendChild(dateDiv);
+              info.appendChild(timeDiv);
+
+              card.appendChild(info);
 
             shiftList.appendChild(card);
         });
