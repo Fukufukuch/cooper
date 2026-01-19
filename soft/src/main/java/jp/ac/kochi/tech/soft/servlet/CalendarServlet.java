@@ -2,15 +2,14 @@ package jp.ac.kochi.tech.soft.servlet;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.*;
+
+import jp.ac.kochi.tech.soft.dao.ShiftDAO;
+import jp.ac.kochi.tech.soft.model.Shift;
 
 import java.io.IOException;
-import java.time.LocalDate;
-import java.time.YearMonth;
-import java.util.ArrayList;
-import java.util.List;
+import java.time.*;
+import java.util.*;
 
 @WebServlet("/calendar")
 public class CalendarServlet extends HttpServlet {
@@ -19,37 +18,40 @@ public class CalendarServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        int year;
-        int month;
+        HttpSession session = request.getSession();
+        String userID = (String) session.getAttribute("userID");
 
-        String yearParam = request.getParameter("year");
-        String monthParam = request.getParameter("month");
+        if (userID == null) {
+            response.sendRedirect("login.jsp");
+            return;
+        }
 
+        int year, month;
         LocalDate today = LocalDate.now();
 
-        if (yearParam == null || monthParam == null) {
+        try {
+            year = Integer.parseInt(request.getParameter("year"));
+            month = Integer.parseInt(request.getParameter("month"));
+        } catch (Exception e) {
             year = today.getYear();
             month = today.getMonthValue();
-        } else {
-            year = Integer.parseInt(yearParam);
-            month = Integer.parseInt(monthParam);
         }
 
-        YearMonth yearMonth = YearMonth.of(year, month);
+        YearMonth ym = YearMonth.of(year, month);
+        LocalDate firstDay = ym.atDay(1);
 
-        LocalDate firstDay = yearMonth.atDay(1);
-        int daysInMonth = yearMonth.lengthOfMonth();
-        int startDayOfWeek = firstDay.getDayOfWeek().getValue(); // 月=1 ... 日=7
+        int daysInMonth = ym.lengthOfMonth();
+        int startDayOfWeek = firstDay.getDayOfWeek().getValue();
 
-        List<Integer> days = new ArrayList<>();
-        for (int i = 1; i <= daysInMonth; i++) {
-            days.add(i);
-        }
+        ShiftDAO dao = new ShiftDAO();
+        Map<Integer, List<Shift>> shiftMap =
+                dao.getMonthlyShifts(userID, year, month);
 
         request.setAttribute("year", year);
         request.setAttribute("month", month);
-        request.setAttribute("days", days);
+        request.setAttribute("daysInMonth", daysInMonth);
         request.setAttribute("startDayOfWeek", startDayOfWeek);
+        request.setAttribute("shiftMap", shiftMap);
 
         request.getRequestDispatcher("/WEB-INF/jsp/calendar.jsp")
                .forward(request, response);
