@@ -23,7 +23,7 @@ public class Login {
 		String pass = db_info.getDBinfo().get("password");
 
 		// 実行SQL
-		String login_sql = "select * from admin_tb "
+		String login_sql = "select * from users "
 				+ "where userID = ? and password = ?;";
 		// 管理者のオブジェクトを作成
 		Admin admin = new Admin();
