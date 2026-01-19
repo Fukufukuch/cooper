@@ -237,11 +237,11 @@
 <header class="header">
     <h1>シフト自動生成システム</h1>
     <nav class="menu">
-        <button>📅 カレンダー</button>
-        <button class="active">📝 シフト情報入力</button>
-        <button>🤝 ヘルプ募集</button>
-        <button>👤 スタッフ</button>
-        <button>⚙ 設定</button>
+        <button>カレンダー</button>
+        <button class="active">シフト情報入力</button>
+        <button>ヘルプ募集</button>
+        <button>ヘルプ応答</button>
+        <button>設定</button>
     </nav>
 </header>
 
@@ -351,7 +351,6 @@
     }
 
     function renderShiftList() {
-      console.log(shift);
         shiftList.innerHTML = "";
 
         if (shiftRequests.length === 0) {
@@ -368,27 +367,28 @@
                 ? "終日勤務可能"
                 : shift.startTime + " 〜 " + shift.endTime;
 
-            /*card.innerHTML =
-              '<div class="shift-info">' +
-                '<div class="shift-date">📅 ' + shift.date + '</div>' +
-                '<div class="shift-time">⏰ ' + timeText + '</div>' +
-              '</div>' +
-              '<button class="delete-btn" onclick="removeShift(' + index + ')">🗑</button>';*/
+            /*card.innerHTML = `
+                <div class="shift-info">
+                    <div class="shift-date">🐈 ${shift.date}</div>
+                    <div class="shift-time">⏰ ${timeText}</div>
+                </div>
+                <button class="delete-btn" onclick="removeShift(${index})">🗑</button>
+            `;*/
+            const dateDiv = document.createElement("div");
+            dateDiv.className = "shift-date";
+            dateDiv.textContent = "📅 " + shift.date;
 
-              const dateDiv = document.createElement("div");
-              dateDiv.className = "shift-date";
-              dateDiv.textContent = shift.date;
+            const timeDiv = document.createElement("div");
+            timeDiv.className = "shift-time";
+            timeDiv.textContent = "⏰ " + timeText;
 
-              const timeDiv = document.createElement("div");
-              timeDiv.className = "shift-time";
-              timeDiv.textContent = timeText;
+            const info = document.createElement("div");
+            info.className = "shift-info";
+            info.appendChild(dateDiv);
+            info.appendChild(timeDiv);
 
-              const info = document.createElement("div");
-              info.className = "shift-info";
-              info.appendChild(dateDiv);
-              info.appendChild(timeDiv);
+            card.appendChild(info);
 
-              card.appendChild(info);
 
             shiftList.appendChild(card);
         });
