@@ -64,7 +64,7 @@ public class Login {
 			// 値がなければ、login_flag（false）のみ格納
 			if(rs.next()) {
 				String dbUserID = rs.getString("userID");
-				String dbName = rs.getString("name");
+				String dbName = rs.getString("username");
 				String dbPassword = rs.getString("password");
 				
 				System.out.println("★★ ヒットあり ★★");
