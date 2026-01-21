@@ -2,17 +2,17 @@ package jp.ac.kochi.tech;
 
 public class Admin {
 
-	private int id;
+	private String userID;
 	private String name;
 	private String password;
 	private boolean login_flag;
 
-	public int getId() {
-		return id;
+	public String getUserID() {
+		return userID;
 	}
 
-	public void setId(int id) {
-		this.id = id;
+	public void setUserID(String userID) {
+		this.userID = userID;
 	}
 
 	public String getName() {

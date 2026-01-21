@@ -23,7 +23,7 @@ public class LoginServlet extends HttpServlet {
 	//ログイン画面を表示させる
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		RequestDispatcher dispatcher =
-				request.getRequestDispatcher("/webapp/login.jsp");
+				request.getRequestDispatcher("/login.jsp");
 		dispatcher.forward(request, response);
 	}
 
@@ -34,7 +34,7 @@ public class LoginServlet extends HttpServlet {
 		request.setCharacterEncoding("UTF-8");
 
 		// ログイン画面で入力された値を取得
-		String user_id = request.getParameter("admin_id");
+		String user_id = request.getParameter("userID");
 		String password = request.getParameter("password");
 
 		// ログイン画面で入力された値をもとに
@@ -48,16 +48,16 @@ public class LoginServlet extends HttpServlet {
 		System.out.println(admin.isLogin_flag());
 
 		if(admin.isLogin_flag()) {
-			// ログイン成功 → 次の画面へ遷移
+			// ログイン成功 → カレンダー画面へ遷移
 			System.out.println("ログイン成功");
-			RequestDispatcher dispatcher =
-					request.getRequestDispatcher("WEB-INF/jsp/customer_list.jsp");
-			dispatcher.forward(request, response);
+			request.getSession().setAttribute("userID", user_id);
+			request.getSession().setAttribute("userName", admin.getName());
+			response.sendRedirect(request.getContextPath() + "/calendar");
 		} else {
 			// ログイン失敗 → ログイン画面へ遷移
 			System.out.println("ログイン失敗");
 			RequestDispatcher dispatcher =
-					request.getRequestDispatcher("WEB-INF/jsp/login.jsp");
+					request.getRequestDispatcher("/login.jsp");
 			dispatcher.forward(request, response);
 		}
 	}

@@ -15,6 +15,8 @@ public class Login {
 	public Admin check(String userID, String password) throws FileNotFoundException {
 
 		System.out.println("★★ check() 開始 ★★");
+		System.out.println("受け取ったuserID: [" + userID + "]");
+		System.out.println("受け取ったpassword: [" + password + "]");
 
 		// データベースへの接続情報をプロパティファイルから取得
 		DBconfig db_info = new DBconfig();
@@ -23,7 +25,7 @@ public class Login {
 		String pass = db_info.getDBinfo().get("password");
 
 		// 実行SQL
-		String login_sql = "select * from admin_tb "
+		String login_sql = "select * from users "
 				+ "where userID = ? and password = ?;";
 		// 管理者のオブジェクトを作成
 		Admin admin = new Admin();
@@ -61,16 +63,26 @@ public class Login {
 			// データベースから取得した値をAdminオブジェクトに格納
 			// 値がなければ、login_flag（false）のみ格納
 			if(rs.next()) {
-				admin.setId(rs.getInt("userID"));
-				admin.setName(rs.getString("name"));
-				admin.setPassword(rs.getString("password"));
-				admin.setLogin_flag(true);
+				String dbUserID = rs.getString("userID");
+				String dbName = rs.getString("username");
+				String dbPassword = rs.getString("password");
+				
 				System.out.println("★★ ヒットあり ★★");
-				//System.out.println("あどみんIDisなに？");
-				//System.out.println(rs.getInt("admin_id"));
+				System.out.println("DBから取得したuserID: [" + dbUserID + "]");
+				System.out.println("DBから取得したname: [" + dbName + "]");
+				System.out.println("DBから取得したpassword: [" + dbPassword + "]");
+				System.out.println("入力されたpassword: [" + password + "]");
+				System.out.println("パスワード一致: " + dbPassword.equals(password));
+				
+				admin.setUserID(dbUserID);
+				admin.setName(dbName);
+				admin.setPassword(dbPassword);
+				admin.setLogin_flag(true);
 			} else {
 				admin.setLogin_flag(false);
-				System.out.println("確定失敗でしぬぅ");
+				System.out.println("★★ マッチするレコードがありません ★★");
+				System.out.println("SQL: select * from users where userID = ? and password = ?");
+				System.out.println("パラメータ - userID: [" + userID + "], password: [" + password + "]");
 			}
 		} catch (SQLException e) {
 			System.out.println("データベースとの接続を閉じます");
