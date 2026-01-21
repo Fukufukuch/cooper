@@ -29,7 +29,7 @@ public class HelpRequestServlet extends HttpServlet {
 		request.setAttribute("helpList", helpList);//保存されている全募集データのリストを、次に表示するJSP画面へ「荷物」として預けてい
 		
 		// 規約に基づきWEB-INF配下のJSPへフォワード
-		RequestDispatcher dispatcher = request.getRequestDispatcher("/helpRequest.jsp");//jspの場所を指定
+		RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/jsp/user/helpRequest.jsp");//jspの場所を指定
 		dispatcher.forward(request, response);//指定したJSP画面に処理をバトンタッチ（転送）し、画面を表示
 	}
 
@@ -68,7 +68,7 @@ public class HelpRequestServlet extends HttpServlet {
 
 		// リストを属性にセットして再表示
 		request.setAttribute("helpList", helpList);
-		RequestDispatcher dispatcher = request.getRequestDispatcher("/helpRequest.jsp");
+		RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/jsp/user/helpRequest.jsp");
 		dispatcher.forward(request, response);
 	}
 

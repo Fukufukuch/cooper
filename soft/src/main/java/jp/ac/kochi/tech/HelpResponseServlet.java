@@ -25,7 +25,7 @@ public class HelpResponseServlet extends HttpServlet {
 		// HelpRequestServletから「募集リスト」を読み取ってリストを取得してセット
 		request.setAttribute("helpList", HelpRequestServlet.getHelpList());
 		
-		RequestDispatcher dispatcher = request.getRequestDispatcher("/helpResponse.jsp");
+		RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/jsp/user/helpResponse.jsp");
 		dispatcher.forward(request, response);//指定したJSP画面に処理を転送し、画面を表示
 	}
 
@@ -64,7 +64,7 @@ public class HelpResponseServlet extends HttpServlet {
 
 		// 更新後のリストを表示用JSPへ渡す
 		request.setAttribute("helpList", helpList);
-		RequestDispatcher dispatcher = request.getRequestDispatcher("/helpResponse.jsp");
+		RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/jsp/user/helpResponse.jsp");
 		dispatcher.forward(request, response);
 	}
 }

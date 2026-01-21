@@ -29,8 +29,10 @@ int nextMonth = month == 12 ? 1 : month + 1;
 <div class="container">
 <div class="header">
     <h1>オートシフタ</h1>
-    <div class="user-info">ログインユーザー: <strong><%= userName %></strong></div>
+    <div class="user-info">ログインユーザー（管理者）: <strong><%= userName %></strong></div>
 </div>
+
+<%@ include file="/WEB-INF/jsp/common/owner_tabs.jspf" %>
 
 <h2><%= year %>年 <%= month %>月</h2>
 
