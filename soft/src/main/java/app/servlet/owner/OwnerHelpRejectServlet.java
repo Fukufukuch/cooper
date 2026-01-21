@@ -4,7 +4,9 @@ import app.dao.RequestDao;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.*;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 
@@ -15,12 +17,13 @@ public class OwnerHelpRejectServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
-        try {
-            req.setCharacterEncoding("UTF-8");
-            int requestID = Integer.parseInt(req.getParameter("requestID"));
+        req.setCharacterEncoding("UTF-8");
 
+        int requestID = Integer.parseInt(req.getParameter("requestID"));
+
+        try {
             RequestDao dao = new RequestDao();
-            dao.deleteById(requestID);
+            dao.reject(requestID);
 
             resp.sendRedirect(req.getContextPath() + "/owner/help");
 

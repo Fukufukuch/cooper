@@ -1,14 +1,14 @@
 package app.servlet.owner;
 
 import app.dao.ShiftDao;
-
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.*;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 import java.time.LocalDate;
-import java.time.YearMonth;
 
 @WebServlet("/owner/shift/edit")
 public class OwnerShiftEditServlet extends HttpServlet {
@@ -18,31 +18,26 @@ public class OwnerShiftEditServlet extends HttpServlet {
             throws ServletException, IOException {
 
         try {
-            // クエリで year/month 来たらそれ優先（無ければ今月）
-            int year, month;
-            String y = req.getParameter("year");
-            String m = req.getParameter("month");
+            LocalDate now = LocalDate.now();
 
-            if (y != null && m != null) {
-                year = Integer.parseInt(y);
-                month = Integer.parseInt(m);
-            } else {
-                LocalDate now = LocalDate.now();
-                year = now.getYear();
-                month = now.getMonthValue();
-            }
+            String yearParam = req.getParameter("year");
+            String monthParam = req.getParameter("month");
 
-            YearMonth ym = YearMonth.of(year, month);
-            LocalDate from = ym.atDay(1);
-            LocalDate to = ym.atEndOfMonth();
+            int year = (yearParam == null || yearParam.isBlank())
+                    ? now.getYear()
+                    : Integer.parseInt(yearParam);
+
+            int month = (monthParam == null || monthParam.isBlank())
+                    ? now.getMonthValue()
+                    : Integer.parseInt(monthParam);
+
+            LocalDate from = LocalDate.of(year, month, 1);
+            LocalDate to = from.withDayOfMonth(from.lengthOfMonth());
 
             ShiftDao dao = new ShiftDao();
-            var rows = dao.findByDateRange(from, to);
-
-            req.setAttribute("activeTab", "shift");
+            req.setAttribute("rows", dao.findByDateRange(from, to)); // ← JSP側が rows を見てるなら rows
             req.setAttribute("year", year);
             req.setAttribute("month", month);
-            req.setAttribute("rows", rows);
 
             req.getRequestDispatcher("/WEB-INF/jsp/owner/shift_edit.jsp").forward(req, resp);
 

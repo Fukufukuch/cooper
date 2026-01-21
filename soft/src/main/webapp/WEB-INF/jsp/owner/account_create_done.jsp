@@ -2,6 +2,8 @@
 <%
   request.setAttribute("activeTab", "setting");
   String createdId = (String) request.getAttribute("createdId");
+  String createdType = (String) request.getAttribute("createdType");
+  if (createdType == null) createdType = "スタッフ";
 %>
 <!DOCTYPE html>
 <html>
@@ -18,12 +20,12 @@
   <%@ include file="/WEB-INF/jsp/common/owner_tabs.jspf" %>
 
   <div class="card" style="margin-top:14px;">
-    <div class="section-title">作成しました</div>
+    <div class="section-title">作成しました（<%= createdType %>）</div>
     <p class="section-desc">発行されたユーザーID：</p>
     <div style="font-size:22px; font-weight:900; margin-top:8px;"><%= createdId %></div>
 
     <div style="margin-top:16px;">
-      <a class="btn" href="<%= request.getContextPath() %>/owner/setting">設定に戻る</a>
+      <a class="btn" href="<%= request.getContextPath() %>/owner/setting/menu">設定に戻る</a>
     </div>
   </div>
 </div>

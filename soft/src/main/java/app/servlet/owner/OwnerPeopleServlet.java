@@ -20,16 +20,15 @@ public class OwnerPeopleServlet extends HttpServlet {
             throws ServletException, IOException {
 
         try {
-            // タブのアクティブ
-            req.setAttribute("activeTab", "people");
-
             UserDao dao = new UserDao();
-            List<User> list = dao.listStaff(); // usertype=1のみ
 
-            req.setAttribute("list", list);
+            // ✅ 管理者 + スタッフ を表示
+            List<User> users = dao.listAllUsers();
 
-            req.getRequestDispatcher("/WEB-INF/jsp/owner/people_list.jsp")
-               .forward(req, resp);
+            // JSPが staffList を見てるので名前は合わせる
+            req.setAttribute("staffList", users);
+
+            req.getRequestDispatcher("/WEB-INF/jsp/owner/people_list.jsp").forward(req, resp);
 
         } catch (Exception e) {
             throw new ServletException(e);

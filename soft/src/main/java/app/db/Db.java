@@ -22,3 +22,4 @@ public class Db {
         return DriverManager.getConnection(URL, USER, PASS);
     }
 }
+

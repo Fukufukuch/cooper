@@ -26,38 +26,48 @@
     <p class="section-desc">request から表示（承認すると shift に反映、却下は削除）</p>
 
     <% if (rows == null || rows.isEmpty()) { %>
-      <div class="note">承認待ちはありません</div>
+      <div class="note">承認待ちはありません。</div>
     <% } else { %>
 
-      <% for (RequestRow r : rows) { %>
-        <div class="action-card">
-          <div>
-            <div style="font-weight:800;">
-              <%= r.day %>　<%= r.start %>〜<%= r.end %>
-            </div>
-            <div class="note">
-              requestID: <%= r.requestID %> / <%= r.userID %> / <%= r.username %>
-            </div>
-          </div>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>申請ID</th>
+            <th>ユーザーID</th>
+            <th>氏名</th>
+            <th>日付</th>
+            <th>開始</th>
+            <th>終了</th>
+            <th style="width:170px;">操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% for (RequestRow r : rows) { %>
+            <tr>
+              <td><%= r.requestID %></td>
+              <td><%= r.userID %></td>
+              <td><%= r.username %></td>
+              <td><%= r.day %></td>
+              <td><%= r.start %></td>
+              <td><%= r.end %></td>
+              <td>
+                <form method="post" action="<%= request.getContextPath() %>/owner/help/approve" style="display:inline;">
+                  <input type="hidden" name="requestID" value="<%= r.requestID %>">
+                  <button class="btn" type="submit">承認</button>
+                </form>
 
-          <div style="display:flex; gap:8px;">
-            <form method="post" action="<%= request.getContextPath() %>/owner/help/approve" style="margin:0;">
-              <input type="hidden" name="requestID" value="<%= r.requestID %>">
-              <button class="btn" type="submit">承認</button>
-            </form>
-
-            <form method="post" action="<%= request.getContextPath() %>/owner/help/reject" style="margin:0;">
-              <input type="hidden" name="requestID" value="<%= r.requestID %>">
-              <button class="btn" type="submit"
-                onclick="return confirm('却下して削除しますか？');">却下</button>
-            </form>
-          </div>
-        </div>
-      <% } %>
+                <form method="post" action="<%= request.getContextPath() %>/owner/help/reject" style="display:inline; margin-left:6px;">
+                  <input type="hidden" name="requestID" value="<%= r.requestID %>">
+                  <button class="btn danger" type="submit">却下</button>
+                </form>
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
 
     <% } %>
   </div>
-
 </div>
 </body>
 </html>

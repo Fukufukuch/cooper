@@ -17,15 +17,16 @@ public class OwnerPeopleDeleteServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
+        req.setCharacterEncoding("UTF-8");
+        String userID = req.getParameter("userID");
+
         try {
-            req.setCharacterEncoding("UTF-8");
-
-            String userID = req.getParameter("userID");
-
             UserDao dao = new UserDao();
-            dao.deleteStaff(userID); // 安全策：usertype=1 だけ消える
+            boolean ok = dao.deleteStaff(userID);
 
-            resp.sendRedirect(req.getContextPath() + "/owner/people");
+            req.setAttribute("deleted", ok);
+            req.setAttribute("userID", userID);
+            req.getRequestDispatcher("/WEB-INF/jsp/owner/people_delete_done.jsp").forward(req, resp);
 
         } catch (Exception e) {
             throw new ServletException(e);

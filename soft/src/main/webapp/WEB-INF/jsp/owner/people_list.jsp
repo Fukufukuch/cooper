@@ -3,8 +3,8 @@
 <%@ page import="app.model.User" %>
 
 <%
-  // OwnerPeopleServlet から来る
-  List<User> list = (List<User>) request.getAttribute("list");
+  request.setAttribute("activeTab", "people");
+  List<User> list = (List<User>) request.getAttribute("staffList");
 %>
 
 <!DOCTYPE html>
@@ -21,50 +21,56 @@
 
   <%@ include file="/WEB-INF/jsp/common/owner_tabs.jspf" %>
 
-  <a class="backlink" href="<%= request.getContextPath() %>/owner/setting">← 設定に戻る</a>
+ 
 
   <div class="card" style="margin-top:14px;">
     <div class="section-title">スタッフ一覧</div>
-    <p class="section-desc">DBの users テーブル（usertype=1）を表示しています。</p>
 
     <% if (list == null || list.isEmpty()) { %>
-      <div class="note">スタッフがまだいません</div>
+      <div class="note">スタッフがまだいません。</div>
     <% } else { %>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>ユーザーID</th>
+            <th>氏名</th>
+            <th>権限</th>
+            <th style="width:120px;">操作</th>
+          </tr>
+        </thead>
+        <tbody>
+        <% for (User u : list) { 
+            String type = u.getUsertype();
+boolean isOwner = "0x00".equals(type) || "0".equals(type) || "false".equalsIgnoreCase(type);
+String role = isOwner ? "管理者" : "スタッフ";
 
-      <% for (User u : list) { %>
-        <div class="action-card">
-          <div>
-            <div style="font-weight:800;">
-              <%= u.getUsername() %>（<%= u.getUserID() %>）
-            </div>
-            <div class="note">
-              email: <%= u.getEmail() %> /
-              phone: <%= u.getPhoneNumber() %> /
-              place: <%= u.getWorkPlace() %> /
-              Tag: <%= u.getTag() %> /
-              Position: <%= u.getPosition() %>
-            </div>
-          </div>
+        %>
+          <tr>
+            <td><%= u.getUserID() %></td>
+            <td><%= u.getUsername() %></td>
+            <td><%= role %></td>
+            <td>
+  <div class="actions">
+    <a class="btn" href="<%= request.getContextPath() %>/owner/people/edit?userID=<%= u.getUserID() %>">編集</a>
 
-          <form method="post" action="<%= request.getContextPath() %>/owner/people/delete" style="margin:0;">
-            <input type="hidden" name="userID" value="<%= u.getUserID() %>">
-            <button class="btn" type="submit"
-                    onclick="return confirm('このスタッフを削除しますか？\\nuserID: <%= u.getUserID() %>');">
-              削除
-            </button>
-          </form>
-        </div>
-      <% } %>
+    <form method="post" action="<%= request.getContextPath() %>/owner/people/delete" class="actions-form">
+      <input type="hidden" name="userID" value="<%= u.getUserID() %>">
+      <button class="btn danger" type="submit">削除</button>
+    </form>
+  </div>
+</td>
 
+
+          </tr>
+        <% } %>
+        </tbody>
+      </table>
     <% } %>
-  </div>
 
-  <div class="card" style="margin-top:14px;">
-    <div class="section-title">アカウント作成</div>
-    <p class="section-desc">スタッフ用のID・パスワードを作成します。</p>
-    <a class="btn" href="<%= request.getContextPath() %>/owner/account/create">作成へ</a>
+    <div style="margin-top:12px;">
+      <a class="btn" href="<%= request.getContextPath() %>/owner/account/create">＋ スタッフ作成</a>
+    </div>
   </div>
-
 </div>
 </body>
 </html>

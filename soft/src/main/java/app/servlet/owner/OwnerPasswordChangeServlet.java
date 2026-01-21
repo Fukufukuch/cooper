@@ -17,9 +17,7 @@ public class OwnerPasswordChangeServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
-        req.setAttribute("activeTab", "setting");
-        req.getRequestDispatcher("/WEB-INF/jsp/owner/password_change.jsp")
-           .forward(req, resp);
+        req.getRequestDispatcher("/WEB-INF/jsp/owner/password_change.jsp").forward(req, resp);
     }
 
     @Override
@@ -28,41 +26,27 @@ public class OwnerPasswordChangeServlet extends HttpServlet {
 
         req.setCharacterEncoding("UTF-8");
 
-        String oldPass = req.getParameter("oldPassword");
-        String newPass = req.getParameter("newPassword");
-        String confirm = req.getParameter("confirmPassword");
-
-        req.setAttribute("activeTab", "setting");
-
-        if (newPass == null || !newPass.equals(confirm)) {
-            req.setAttribute("error", "新しいパスワードが一致しません");
-            req.getRequestDispatcher("/WEB-INF/jsp/owner/password_change.jsp")
-               .forward(req, resp);
-            return;
-        }
+        String userID = req.getParameter("userID");
+        String oldPassword = req.getParameter("oldPassword");
+        String newPassword = req.getParameter("newPassword");
 
         try {
             UserDao dao = new UserDao();
-            String adminId = dao.findAdminUserId();
-            if (adminId == null) {
-                req.setAttribute("error", "管理者アカウントがDBに存在しません（users.usertype=0 を確認）");
-                req.getRequestDispatcher("/WEB-INF/jsp/owner/password_change.jsp")
-                   .forward(req, resp);
+            boolean ok = dao.changePassword(userID, oldPassword, newPassword);
+
+            if (!ok) {
+                req.setAttribute("error", "ユーザーIDか現在のパスワードが違います。");
+                req.getRequestDispatcher("/WEB-INF/jsp/owner/password_change.jsp").forward(req, resp);
                 return;
             }
 
-            boolean ok = dao.changePassword(adminId, oldPass, newPass);
-            if (!ok) {
-                req.setAttribute("error", "現在のパスワードが違います");
-            } else {
-                req.setAttribute("success", "パスワードを変更しました");
-            }
+            // ✅ 完了画面へ
+            req.setAttribute("userID", userID);
+            req.getRequestDispatcher("/WEB-INF/jsp/owner/password_change_done.jsp")
+               .forward(req, resp);
 
         } catch (Exception e) {
             throw new ServletException(e);
         }
-
-        req.getRequestDispatcher("/WEB-INF/jsp/owner/password_change.jsp")
-           .forward(req, resp);
     }
 }

@@ -14,54 +14,10 @@ import java.util.List;
 
 public class UserDao {
 
-    private static final SecureRandom RAND = new SecureRandom();
     private static final String TABLE = "users";
 
     // ==================================================
-    // 全ユーザー取得（スタッフ一覧など）
-    // ==================================================
-    public List<User> findAllUsers() throws SQLException {
-
-        String sql =
-                "SELECT userID, username, usertype, email, phone_number, " +
-                "       work_place, Tag, Position, date_of_birth " +
-                "FROM users " +
-                "ORDER BY userID DESC";
-
-        List<User> list = new ArrayList<>();
-
-        try (Connection con = Db.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-
-            while (rs.next()) {
-                User u = new User();
-
-                u.setUserID(rs.getString("userID"));
-                u.setUsername(rs.getString("username"));
-
-                // usertype: 0=管理者 / 1=スタッフ
-                u.setUsertype(rs.getBoolean("usertype"));
-
-                u.setEmail(rs.getString("email"));
-                u.setPhoneNumber(rs.getString("phone_number"));
-                u.setWorkPlace(rs.getString("work_place"));
-                u.setTag(rs.getInt("Tag"));
-                u.setPosition(rs.getInt("Position"));
-
-                Date dob = rs.getDate("date_of_birth");
-                if (dob != null) {
-                    u.setDateOfBirth(dob.toLocalDate());
-                }
-
-                list.add(u);
-            }
-        }
-        return list;
-    }
-
-    // ==================================================
-    // スタッフ一覧（usertype = 1）
+    // staff一覧（usertype=1のみ）
     // ==================================================
     public List<User> listStaff() throws SQLException {
 
@@ -80,24 +36,15 @@ public class UserDao {
 
             while (rs.next()) {
                 User u = new User();
-
                 u.setUserID(rs.getString("userID"));
                 u.setUsername(rs.getString("username"));
-
-                // スタッフ固定（usertype=1）
-                u.setUsertype(true);
-
+                u.setUsertype(rs.getString("usertype"));
                 u.setEmail(rs.getString("email"));
                 u.setPhoneNumber(rs.getString("phone_number"));
-                u.setWorkPlace(rs.getString("work_place"));
+                u.setDateOfBirth(rs.getDate("date_of_birth"));
                 u.setTag(rs.getInt("Tag"));
                 u.setPosition(rs.getInt("Position"));
-
-                Date dob = rs.getDate("date_of_birth");
-                if (dob != null) {
-                    u.setDateOfBirth(dob.toLocalDate());
-                }
-
+                u.setWorkPlace(rs.getString("work_place"));
                 list.add(u);
             }
         }
@@ -105,16 +52,31 @@ public class UserDao {
     }
 
     // ==================================================
-    // スタッフ削除（安全：usertype=1のみ）
+    // staff削除（usertype=1のみ）
     // ==================================================
     public boolean deleteStaff(String userID) throws SQLException {
-        String sql = "DELETE FROM " + TABLE + " WHERE userID = ? AND usertype = b'1'";
+        // worker -> users の順で消さないと、shift のFK等で落ちる
+        String deleteWorker = "DELETE FROM worker WHERE workerID = ?";
+        String deleteUsers  = "DELETE FROM " + TABLE + " WHERE userID = ? AND usertype = b'1'";
 
-        try (Connection con = Db.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+        try (Connection con = Db.getConnection()) {
+            con.setAutoCommit(false);
 
-            ps.setString(1, userID);
-            return ps.executeUpdate() == 1;
+            // worker が無い場合もあるので 0件でもOK
+            try (PreparedStatement ps = con.prepareStatement(deleteWorker)) {
+                ps.setString(1, userID);
+                ps.executeUpdate();
+            }
+
+            int deleted;
+            try (PreparedStatement ps = con.prepareStatement(deleteUsers)) {
+                ps.setString(1, userID);
+                deleted = ps.executeUpdate();
+            }
+
+            con.commit();
+            con.setAutoCommit(true);
+            return deleted == 1;
         }
     }
 
@@ -134,40 +96,48 @@ public class UserDao {
             userID = generateUserId10();
         }
 
-        String sql =
+        String insertUsers =
                 "INSERT INTO " + TABLE +
                 " (userID, username, usertype, password, date_of_birth, " +
                 "  phone_number, email, TotalWorking, Tag, Position, work_place) " +
                 "VALUES (?, ?, b'1', ?, ?, ?, ?, 0, 0, 0, ?)";
 
-        try (Connection con = Db.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+        // shift のFKで必要になるので、スタッフ作成時に worker も必ず作る
+        String insertWorker = "INSERT INTO worker(workerID) VALUES (?)";
 
-            ps.setString(1, userID);
-            ps.setString(2, username);
-            ps.setString(3, password);
-            ps.setDate(4, dateOfBirth);
-            ps.setString(5, phoneNumber);
-            ps.setString(6, email);
+        try (Connection con = Db.getConnection()) {
+            con.setAutoCommit(false);
 
-            // work_place は NOT NULL なので必ず入れる
-            ps.setString(7, "未設定");
+            try (PreparedStatement ps = con.prepareStatement(insertUsers)) {
+                ps.setString(1, userID);
+                ps.setString(2, username);
+                ps.setString(3, password);
+                ps.setDate(4, dateOfBirth);
+                ps.setString(5, phoneNumber);
+                ps.setString(6, email);
 
-            ps.executeUpdate();
+                // work_place は NOT NULL なので必ず入れる
+                ps.setString(7, "未設定");
+
+                ps.executeUpdate();
+            }
+
+            try (PreparedStatement ps = con.prepareStatement(insertWorker)) {
+                ps.setString(1, userID);
+                ps.executeUpdate();
+            }
+
+            con.commit();
+            con.setAutoCommit(true);
+            return userID;
         }
-
-        return userID;
     }
 
     // ==================================================
-    // パスワード変更
+    // パスワード変更（本人用）
     // ==================================================
-    public boolean changePassword(String userID, String oldPassword, String newPassword)
-            throws SQLException {
-
-        String sql =
-                "UPDATE " + TABLE +
-                " SET password = ? WHERE userID = ? AND password = ?";
+    public boolean changePassword(String userID, String oldPassword, String newPassword) throws SQLException {
+        String sql = "UPDATE users SET password = ? WHERE userID = ? AND password = ?";
 
         try (Connection con = Db.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -181,33 +151,25 @@ public class UserDao {
     }
 
     // ==================================================
-    // 管理者ID取得（usertype=0 の先頭1件）
+    // 管理者ID取得（usertype=0）
     // ==================================================
-    public String findAdminUserId() throws SQLException {
-
-        String sql = "SELECT userID FROM " + TABLE + " WHERE usertype = b'0' LIMIT 1";
-
+    public String findOwnerId() throws SQLException {
+        String sql = "SELECT userID FROM users WHERE usertype = b'0' ORDER BY userID LIMIT 1";
         try (Connection con = Db.getConnection();
              PreparedStatement ps = con.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
-
-            if (rs.next()) {
-                return rs.getString("userID");
-            }
+            if (rs.next()) return rs.getString("userID");
+            return null;
         }
-        return null;
     }
 
     // ==================================================
-    // private
+    // 内部
     // ==================================================
     private boolean existsUserId(String userID) throws SQLException {
-
-        String sql = "SELECT 1 FROM " + TABLE + " WHERE userID = ? LIMIT 1";
-
+        String sql = "SELECT 1 FROM users WHERE userID = ? LIMIT 1";
         try (Connection con = Db.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
-
             ps.setString(1, userID);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next();
@@ -215,13 +177,301 @@ public class UserDao {
         }
     }
 
-    /** 10桁の数字IDを作る（例：7392695024） */
+    private static final SecureRandom RAND = new SecureRandom();
+
+    // 10桁の数字ID（char(10)）
     private String generateUserId10() {
-        long n = Math.abs(RAND.nextLong());
-        String s = Long.toString(n);
-        while (s.length() < 10) {
-            s += RAND.nextInt(10);
+        StringBuilder sb = new StringBuilder(10);
+        for (int i = 0; i < 10; i++) {
+            sb.append(RAND.nextInt(10));
         }
-        return s.substring(0, 10);
+        return sb.toString();
     }
+    // ==================================================
+// staff 1件取得（編集画面用）
+// ==================================================
+public User findStaffById(String userID) throws SQLException {
+
+    String sql =
+            "SELECT userID, username, usertype, email, phone_number, " +
+            "       date_of_birth, Tag, Position, work_place " +
+            "FROM users " +
+            "WHERE userID = ? AND usertype = b'1' " +
+            "LIMIT 1";
+
+    try (Connection con = Db.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql)) {
+
+        ps.setString(1, userID);
+
+        try (ResultSet rs = ps.executeQuery()) {
+            if (!rs.next()) return null;
+
+            User u = new User();
+            u.setUserID(rs.getString("userID"));
+            u.setUsername(rs.getString("username"));
+            u.setUsertype(rs.getString("usertype"));
+            u.setEmail(rs.getString("email"));
+            u.setPhoneNumber(rs.getString("phone_number"));
+            u.setDateOfBirth(rs.getDate("date_of_birth"));
+            u.setTag(rs.getInt("Tag"));
+            u.setPosition(rs.getInt("Position"));
+            u.setWorkPlace(rs.getString("work_place"));
+            return u;
+        }
+    }
+}
+
+// ==================================================
+// staff 更新（usersテーブル更新）
+// ==================================================
+public boolean updateStaff(
+        String userID,
+        String username,
+        String email,
+        String phoneNumber,
+        Date dateOfBirth,
+        int tag,
+        int position,
+        String workPlace
+) throws SQLException {
+
+    // position が存在しなかったら 1（未設定）に落とす（FK事故防止）
+    String existsPos = "SELECT 1 FROM position WHERE id = ? LIMIT 1";
+    try (Connection con = Db.getConnection();
+         PreparedStatement ps = con.prepareStatement(existsPos)) {
+        ps.setInt(1, position);
+        try (ResultSet rs = ps.executeQuery()) {
+            if (!rs.next()) {
+                position = 1;
+            }
+        }
+    }
+
+    String sql =
+            "UPDATE users SET " +
+            " username = ?, " +
+            " email = ?, " +
+            " phone_number = ?, " +
+            " date_of_birth = ?, " +
+            " Tag = ?, " +
+            " Position = ?, " +
+            " work_place = ? " +
+            "WHERE userID = ? AND usertype = b'1'";
+
+    try (Connection con = Db.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql)) {
+
+        ps.setString(1, username);
+        ps.setString(2, email);
+        ps.setString(3, phoneNumber);
+        ps.setDate(4, dateOfBirth);
+        ps.setInt(5, tag);
+        ps.setInt(6, position);
+        ps.setString(7, workPlace);
+        ps.setString(8, userID);
+
+        return ps.executeUpdate() == 1;
+    }
+}
+// ==================================================
+// 管理者/スタッフ 両対応の作成
+// usertype: 0=管理者, 1=スタッフ
+// ==================================================
+public String createUser(
+        String username,
+        String email,
+        String phoneNumber,
+        Date dateOfBirth,
+        String password,
+        int usertype,
+        int tag,
+        int position,
+        String workPlace
+) throws SQLException {
+
+    // usertypeの安全化
+    if (usertype != 0) usertype = 1;
+
+    // position が存在しなかったら 1（未設定）に落とす（FK事故防止）
+    String existsPos = "SELECT 1 FROM position WHERE id = ? LIMIT 1";
+
+    String userID = generateUserId10();
+    while (existsUserId(userID)) {
+        userID = generateUserId10();
+    }
+
+    String insertUsers =
+            "INSERT INTO users " +
+            " (userID, username, usertype, password, date_of_birth, " +
+            "  phone_number, email, TotalWorking, Tag, Position, work_place) " +
+            "VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?)";
+
+    String insertWorker = "INSERT INTO worker(workerID) VALUES (?)";
+
+    try (Connection con = Db.getConnection()) {
+        con.setAutoCommit(false);
+
+        // positionチェック（同じTxで見たいので con を使う）
+        try (PreparedStatement ps = con.prepareStatement(existsPos)) {
+            ps.setInt(1, position);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) position = 1;
+            }
+        }
+
+        try (PreparedStatement ps = con.prepareStatement(insertUsers)) {
+            ps.setString(1, userID);
+            ps.setString(2, username);
+
+            // bit(1) に入るように 0/1 をそのまま
+            ps.setInt(3, usertype);
+
+            ps.setString(4, password);
+            ps.setDate(5, dateOfBirth);
+            ps.setString(6, phoneNumber);
+            ps.setString(7, email);
+
+            ps.setInt(8, tag);
+            ps.setInt(9, position);
+
+            // NOT NULL なので必ず入れる
+            ps.setString(10, workPlace);
+
+            ps.executeUpdate();
+        }
+
+        // スタッフだけ worker 行を作る（shiftのFK対策）
+        if (usertype == 1) {
+            try (PreparedStatement ps = con.prepareStatement(insertWorker)) {
+                ps.setString(1, userID);
+                ps.executeUpdate();
+            }
+        }
+
+        con.commit();
+        con.setAutoCommit(true);
+        return userID;
+    }
+}
+// ==================================================
+// 全ユーザー一覧（管理者 + スタッフ）
+// ==================================================
+public List<User> listAllUsers() throws SQLException {
+
+    String sql =
+            "SELECT userID, username, usertype, email, phone_number, " +
+            "       date_of_birth, Tag, Position, work_place " +
+            "FROM users " +
+            "ORDER BY usertype ASC, userID ASC"; // 0(管理者)→1(スタッフ)
+
+    List<User> list = new ArrayList<>();
+
+    try (Connection con = Db.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql);
+         ResultSet rs = ps.executeQuery()) {
+
+        while (rs.next()) {
+            User u = new User();
+            u.setUserID(rs.getString("userID"));
+            u.setUsername(rs.getString("username"));
+            u.setUsertype(rs.getString("usertype"));
+            u.setEmail(rs.getString("email"));
+            u.setPhoneNumber(rs.getString("phone_number"));
+            u.setDateOfBirth(rs.getDate("date_of_birth"));
+            u.setTag(rs.getInt("Tag"));
+            u.setPosition(rs.getInt("Position"));
+            u.setWorkPlace(rs.getString("work_place"));
+            list.add(u);
+        }
+    }
+    return list;
+}
+// ==================================================
+// user 1件取得（管理者/スタッフ両方）
+// ==================================================
+public User findUserById(String userID) throws SQLException {
+
+    String sql =
+            "SELECT userID, username, usertype, email, phone_number, " +
+            "       date_of_birth, Tag, Position, work_place " +
+            "FROM users " +
+            "WHERE userID = ? " +
+            "LIMIT 1";
+
+    try (Connection con = Db.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql)) {
+
+        ps.setString(1, userID);
+
+        try (ResultSet rs = ps.executeQuery()) {
+            if (!rs.next()) return null;
+
+            User u = new User();
+            u.setUserID(rs.getString("userID"));
+            u.setUsername(rs.getString("username"));
+            u.setUsertype(rs.getString("usertype"));
+            u.setEmail(rs.getString("email"));
+            u.setPhoneNumber(rs.getString("phone_number"));
+            u.setDateOfBirth(rs.getDate("date_of_birth"));
+            u.setTag(rs.getInt("Tag"));
+            u.setPosition(rs.getInt("Position"));
+            u.setWorkPlace(rs.getString("work_place"));
+            return u;
+        }
+    }
+}
+// ==================================================
+// user 更新（管理者/スタッフ両方）
+// ==================================================
+public boolean updateUser(
+        String userID,
+        String username,
+        String email,
+        String phoneNumber,
+        Date dateOfBirth,
+        int tag,
+        int position,
+        String workPlace
+) throws SQLException {
+
+    // positionが存在しなければ 1（未設定）へ
+    String existsPos = "SELECT 1 FROM position WHERE id = ? LIMIT 1";
+    try (Connection con = Db.getConnection();
+         PreparedStatement ps = con.prepareStatement(existsPos)) {
+
+        ps.setInt(1, position);
+        try (ResultSet rs = ps.executeQuery()) {
+            if (!rs.next()) position = 1;
+        }
+    }
+
+    String sql =
+            "UPDATE users SET " +
+            " username = ?, " +
+            " email = ?, " +
+            " phone_number = ?, " +
+            " date_of_birth = ?, " +
+            " Tag = ?, " +
+            " Position = ?, " +
+            " work_place = ? " +
+            "WHERE userID = ?";
+
+    try (Connection con = Db.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql)) {
+
+        ps.setString(1, username);
+        ps.setString(2, email);
+        ps.setString(3, phoneNumber);
+        ps.setDate(4, dateOfBirth);
+        ps.setInt(5, tag);
+        ps.setInt(6, position);
+        ps.setString(7, workPlace);
+        ps.setString(8, userID);
+
+        return ps.executeUpdate() == 1;
+    }
+}
+
+    
 }

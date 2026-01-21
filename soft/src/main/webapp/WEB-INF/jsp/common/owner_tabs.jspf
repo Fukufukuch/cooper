@@ -21,7 +21,7 @@
   </a>
 
   <a class="navitem <%= "setting".equals(activeTab) ? "active" : "" %>"
-     href="${pageContext.request.contextPath}/owner/setting">
+     href="${pageContext.request.contextPath}/owner/setting/menu">
     <span class="ico">■</span><span>設定</span>
   </a>
 </div>

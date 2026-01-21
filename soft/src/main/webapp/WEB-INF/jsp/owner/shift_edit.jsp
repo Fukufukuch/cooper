@@ -28,40 +28,43 @@
   <!-- ===== 一覧 ===== -->
   <div class="card" style="margin-top:14px;">
     <div class="section-title">今月のシフト（<%= year %>/<%= month %>）</div>
-    <p class="section-desc">shift テーブルから表示しています。</p>
+    <p class="section-desc">shift テーブルから表示（削除できます）</p>
 
     <% if (rows == null || rows.isEmpty()) { %>
-      <div class="note">まだシフトがありません</div>
+      <div class="note">この月のシフトはありません。</div>
     <% } else { %>
 
-      <% for (ShiftRow r : rows) { %>
-        <div class="action-card">
-          <div>
-            <div style="font-weight:800;">
-              <%= r.shiftInfoDay %> ／ <%= r.shiftTimetable %>
-              <% if (r.shiftTimetableNumber != null) { %>
-                （<%= r.shiftTimetableNumber %>）
-              <% } %>
-            </div>
-            <div class="note">
-              shiftID: <%= r.shiftID %> ／ <%= r.userID %> ／ <%= r.username %>
-            </div>
-          </div>
-
-          <form method="post"
-                action="<%= request.getContextPath() %>/owner/shift/delete"
-                style="margin:0;">
-            <input type="hidden" name="shiftID" value="<%= r.shiftID %>">
-            <input type="hidden" name="year" value="<%= year %>">
-            <input type="hidden" name="month" value="<%= month %>">
-
-            <button class="btn" type="submit"
-              onclick="return confirm('このシフトを削除しますか？');">
-              削除
-            </button>
-          </form>
-        </div>
-      <% } %>
+      <table class="table">
+        <thead>
+        <tr>
+          <th>ID</th>
+          <th>ユーザーID</th>
+          <th>氏名</th>
+          <th>日付</th>
+          <th>時間帯</th>
+          <th style="width:120px;">操作</th>
+        </tr>
+        </thead>
+        <tbody>
+        <% for (ShiftRow r : rows) { %>
+          <tr>
+            <td><%= r.shiftID %></td>
+            <td><%= r.userID %></td>
+            <td><%= r.username %></td>
+            <td><%= r.shiftInfoDay %></td>
+            <td><%= r.shiftTimetable %></td>
+            <td>
+              <form method="post" action="<%= request.getContextPath() %>/owner/shift/delete" style="display:inline;">
+                <input type="hidden" name="shiftID" value="<%= r.shiftID %>">
+                <input type="hidden" name="year" value="<%= year %>">
+                <input type="hidden" name="month" value="<%= month %>">
+                <button class="btn danger" type="submit">削除</button>
+              </form>
+            </td>
+          </tr>
+        <% } %>
+        </tbody>
+      </table>
 
     <% } %>
   </div>
@@ -69,37 +72,37 @@
   <!-- ===== 追加 ===== -->
   <div class="card" style="margin-top:14px;">
     <div class="section-title">シフト追加</div>
-    <p class="section-desc">日付はカレンダーから選択できます。</p>
+    <p class="section-desc">（画面互換のため、時間帯は「早番/中番/遅番」の入力でOK）</p>
 
-    <form class="form"
-          method="post"
-          action="<%= request.getContextPath() %>/owner/shift/add">
-
+    <form method="post" action="<%= request.getContextPath() %>/owner/shift/add">
       <input type="hidden" name="year" value="<%= year %>">
       <input type="hidden" name="month" value="<%= month %>">
 
-      <div style="margin-top:10px;">
-        <div class="note">ユーザーID</div>
-        <input class="input" name="userID" required maxlength="10"
-               placeholder="U000000001">
+      <div class="form-row">
+        <label>ユーザーID</label>
+        <input class="input" type="text" name="userID" maxlength="10" required>
       </div>
 
-      <div style="margin-top:10px;">
-        <div class="note">日付</div>
+      <div class="form-row">
+        <label>日付</label>
         <input class="input" type="date" name="day" required>
       </div>
 
-      <div style="margin-top:10px;">
-        <div class="note">勤務区分</div>
-        <input class="input" name="timetable" placeholder="早番">
+      <div class="form-row">
+        <label>時間帯</label>
+        <select class="input" name="timetable">
+          <option value="早番">早番</option>
+          <option value="中番">中番</option>
+          <option value="遅番">遅番</option>
+        </select>
       </div>
 
-      <div style="margin-top:10px;">
-        <div class="note">勤務番号</div>
-        <input class="input" name="timetableNumber" placeholder="1">
+      <div class="form-row">
+        <label>時間帯番号（任意）</label>
+        <input class="input" type="number" name="timetableNumber" min="1" max="3" placeholder="1=早番,2=中番,3=遅番">
       </div>
 
-      <div style="margin-top:14px;">
+      <div class="form-actions">
         <button class="btn" type="submit">追加</button>
       </div>
     </form>

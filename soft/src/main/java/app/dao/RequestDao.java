@@ -14,20 +14,20 @@ public class RequestDao {
     public static class RequestRow {
         public int requestID;
         public String userID;
-        public String username; // usersから
+        public String username;
         public LocalDate day;
         public LocalTime start;
         public LocalTime end;
     }
 
-    /** 承認待ち一覧（request + users） */
-    public List<RequestRow> findAll() throws SQLException {
+    /** 一覧（help_list.jsp 用） */
+    public List<RequestRow> listAll() throws SQLException {
 
         String sql =
-            "SELECT r.requestID, r.userID, u.username, " +
-            "       r.shift_request_day, r.shift_request_time_start, r.shift_request_time_end " +
+            "SELECT r.requestID, r.userID, u.username, r.shift_request_day, " +
+            "       r.shift_request_time_start, r.shift_request_time_end " +
             "FROM request r " +
-            "JOIN users u ON u.userID = r.userID " +     // ★ここ重要：users
+            "JOIN users u ON r.userID = u.userID " +
             "ORDER BY r.requestID DESC";
 
         List<RequestRow> list = new ArrayList<>();
@@ -41,23 +41,19 @@ public class RequestDao {
                 row.requestID = rs.getInt("requestID");
                 row.userID = rs.getString("userID");
                 row.username = rs.getString("username");
-                row.day = rs.getDate("shift_request_day").toLocalDate();
-                row.start = rs.getTime("shift_request_time_start").toLocalTime();
-                row.end = rs.getTime("shift_request_time_end").toLocalTime();
+
+                Date d = rs.getDate("shift_request_day");
+                row.day = (d == null) ? null : d.toLocalDate();
+
+                Time s = rs.getTime("shift_request_time_start");
+                Time e = rs.getTime("shift_request_time_end");
+                row.start = (s == null) ? null : s.toLocalTime();
+                row.end = (e == null) ? null : e.toLocalTime();
+
                 list.add(row);
             }
         }
         return list;
-    }
-
-    /** 却下：requestから削除 */
-    public boolean deleteById(int requestID) throws SQLException {
-        String sql = "DELETE FROM request WHERE requestID = ?";
-        try (Connection con = Db.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setInt(1, requestID);
-            return ps.executeUpdate() == 1;
-        }
     }
 
     /** 承認：shiftに反映してrequest削除（トランザクション） */
@@ -67,9 +63,16 @@ public class RequestDao {
             "SELECT userID, shift_request_day, shift_request_time_start, shift_request_time_end " +
             "FROM request WHERE requestID = ?";
 
+        // shift は新定義：date/workerID/positionID/start_minute/end_minute
+        // worker が無いとFKで落ちるので、先に worker を確保する
+        String ensureWorker = "INSERT IGNORE INTO worker(workerID) VALUES (?)";
+
+        // users.Position を positionID として使う
+        String getPos = "SELECT Position FROM users WHERE userID = ?";
+
         String insertShift =
-            "INSERT INTO shift (userID, shift_info_day, shift_timetable, shift_timetable_number) " +
-            "VALUES (?, ?, ?, ?)";
+            "INSERT INTO shift (date, workerID, positionID, start_minute, end_minute) " +
+            "VALUES (?, ?, ?, ?, ?)";
 
         String deleteReq = "DELETE FROM request WHERE requestID = ?";
 
@@ -86,27 +89,53 @@ public class RequestDao {
                 try (ResultSet rs = ps.executeQuery()) {
                     if (!rs.next()) {
                         con.rollback();
-                        return; // もう消えてるとか
+                        throw new SQLException("requestが見つかりません: requestID=" + requestID);
                     }
                     userID = rs.getString("userID");
-                    day = rs.getDate("shift_request_day").toLocalDate();
-                    start = rs.getTime("shift_request_time_start").toLocalTime();
-                    end = rs.getTime("shift_request_time_end").toLocalTime();
+                    Date d = rs.getDate("shift_request_day");
+                    Time s = rs.getTime("shift_request_time_start");
+                    Time e = rs.getTime("shift_request_time_end");
+
+                    day = d.toLocalDate();
+                    start = s.toLocalTime();
+                    end = e.toLocalTime();
                 }
             }
 
-            // 時間 → 勤務区分（適当に決める。必要なら後で調整）
-            ShiftType type = mapToShiftType(start, end);
-
-            try (PreparedStatement ps = con.prepareStatement(insertShift)) {
+            // worker 行を確保
+            try (PreparedStatement ps = con.prepareStatement(ensureWorker)) {
                 ps.setString(1, userID);
-                ps.setDate(2, Date.valueOf(day));
-                ps.setString(3, type.label);        // "早番" / "遅番" / "中番"
-                if (type.number == null) ps.setNull(4, Types.INTEGER);
-                else ps.setInt(4, type.number);
                 ps.executeUpdate();
             }
 
+            // positionID 取得
+            int positionID;
+            try (PreparedStatement ps = con.prepareStatement(getPos)) {
+                ps.setString(1, userID);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (!rs.next()) {
+                        con.rollback();
+                        throw new SQLException("usersが見つかりません: userID=" + userID);
+                    }
+                    positionID = rs.getInt("Position");
+                }
+            }
+
+            // time -> minute
+            int startMin = start.getHour() * 60 + start.getMinute();
+            int endMin = end.getHour() * 60 + end.getMinute();
+
+            // shift INSERT
+            try (PreparedStatement ps = con.prepareStatement(insertShift)) {
+                ps.setDate(1, Date.valueOf(day));
+                ps.setString(2, userID);
+                ps.setInt(3, positionID);
+                ps.setInt(4, startMin);
+                ps.setInt(5, endMin);
+                ps.executeUpdate();
+            }
+
+            // request DELETE
             try (PreparedStatement ps = con.prepareStatement(deleteReq)) {
                 ps.setInt(1, requestID);
                 ps.executeUpdate();
@@ -117,22 +146,13 @@ public class RequestDao {
         }
     }
 
-    // ------- helper -------
-
-    private static class ShiftType {
-        String label;
-        Integer number;
-        ShiftType(String label, Integer number) { this.label = label; this.number = number; }
-    }
-
-    private ShiftType mapToShiftType(LocalTime start, LocalTime end) {
-        // 例ルール：9-13=早番(1)、13-17=中番(2)、17-21=遅番(3)
-        if (!start.isAfter(LocalTime.of(9,0)) && !end.isAfter(LocalTime.of(13,0))) {
-            return new ShiftType("早番", 1);
+    /** 却下（request削除だけ） */
+    public void reject(int requestID) throws SQLException {
+        String sql = "DELETE FROM request WHERE requestID = ?";
+        try (Connection con = Db.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, requestID);
+            ps.executeUpdate();
         }
-        if (!start.isAfter(LocalTime.of(13,0)) && !end.isAfter(LocalTime.of(17,0))) {
-            return new ShiftType("中番", 2);
-        }
-        return new ShiftType("遅番", 3);
     }
 }

@@ -1,64 +1,42 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%
-  request.setAttribute("activeTab", "people");
-%>
-
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
   <title>設定</title>
-  <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/app.css">
+  <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/app.css">
 </head>
 <body>
-  <div class="container">
-    <a class="backlink" href="<%= request.getContextPath() %>/owner/menu">
-      <span class="arrow">←</span><span>メニューに戻る</span>
-    </a>
+<div class="container">
+  <div class="h1">シフト自動生成システム</div>
+  <div class="sub">設定</div>
 
-    <div class="card">
-      <div class="section-title">設定</div>
-      <p class="section-desc">アカウント作成・削除、パスワード変更</p>
+  <%@ include file="/WEB-INF/jsp/common/owner_tabs.jspf" %>
 
-      <div style="margin-top:16px;">
-        <div class="action-card">
-          <div class="action-left">
-            <div class="action-ico">👤</div>
-            <div class="action-main">
-              <div class="action-title">アカウント作成</div>
-              <div class="action-sub">スタッフ用のID・パスワードを作成</div>
-            </div>
-          </div>
-          <a class="btn primary" href="<%= request.getContextPath() %>/owner/account/create">開く</a>
+  <div class="card" style="margin-top:14px;">
+    <div class="section-title">設定メニュー</div>
+    <p class="section-desc">各機能を選んでください。</p>
+
+    <div class="form" style="margin-top:14px;">
+      <div class="action-card">
+        <div>
+          <div style="font-weight:800;">アカウント作成</div>
+          <div class="note">スタッフ用のID・パスワードを作成</div>
         </div>
+        <a class="btn" href="${pageContext.request.contextPath}/owner/account/create">開く</a>
+      </div>
 
-        <div class="action-card">
-          <div class="action-left">
-            <div class="action-ico">👥</div>
-            <div class="action-main">
-              <div class="action-title">アカウント一覧・削除</div>
-              <div class="action-sub">スタッフ一覧の確認／削除</div>
-            </div>
-          </div>
-          <a class="btn" href="<%= request.getContextPath() %>/owner/people">開く</a>
+ 
+
+      <div class="action-card">
+        <div>
+          <div style="font-weight:800;">パスワード変更</div>
+          <div class="note">管理者パスワードを変更</div>
         </div>
-
-        <div class="action-card">
-          <div class="action-left">
-            <div class="action-ico">🔑</div>
-            <div class="action-main">
-              <div class="action-title">パスワード変更</div>
-              <div class="action-sub">管理者パスワードを変更</div>
-            </div>
-          </div>
-          <a class="btn" href="<%= request.getContextPath() %>/owner/password">開く</a>
-        </div>
-
-        <p class="note">※ ここから先の画面も同じCSS（app.css）で統一する。</p>
+        <a class="btn" href="${pageContext.request.contextPath}/owner/password">開く</a>
       </div>
     </div>
   </div>
-
-  <a class="help-fab" href="#" title="ヘルプ">?</a>
+</div>
 </body>
 </html>
