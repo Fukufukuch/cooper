@@ -1,0 +1,6 @@
+﻿target/
+soft/target/
+_wartmp/
+JavaTest/bin/
+*.class
+*.war
