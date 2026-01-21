@@ -13,8 +13,8 @@
 		<h1 class="mb-3" style="text-align: center">ログイン画面</h1>
 		<form action="${pageContext.request.contextPath}/LoginServlet" method="post">
 		  <div class="mb-3">
-		    <label for="adminID" class="form-label">管理者ID</label>
-		    <input type="text" class="form-control" id="adminID" name="admin_id">
+		    <label for="userID" class="form-label">管理者ID</label>
+		    <input type="text" class="form-control" id="userID" name="userID">
 		  </div>
 		  <div class="mb-3">
 		    <label for="pass" class="form-label">パスワード</label>
