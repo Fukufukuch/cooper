@@ -6,6 +6,7 @@ public class Admin {
 	private String name;
 	private String password;
 	private boolean login_flag;
+	private int usertype;
 
 	public String getUserID() {
 		return userID;
@@ -37,5 +38,13 @@ public class Admin {
 
 	public void setLogin_flag(boolean login_flag) {
 		this.login_flag = login_flag;
+	}
+
+	public int getUsertype() {
+		return usertype;
+	}
+
+	public void setUsertype(int usertype) {
+		this.usertype = usertype;
 	}
 }

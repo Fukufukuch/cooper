@@ -25,6 +25,7 @@ public class CalendarServlet extends HttpServlet {
         HttpSession session = request.getSession();
         String userID = (String) session.getAttribute("userID");
         String userName = (String) session.getAttribute("userName");
+        Integer usertype = (Integer) session.getAttribute("usertype");
 
         System.out.println("セッションから取得したuserID: [" + userID + "]");
         System.out.println("セッションから取得したuserName: [" + userName + "]");
@@ -81,7 +82,16 @@ public class CalendarServlet extends HttpServlet {
         request.setAttribute("shiftMap", shiftMap);
         request.setAttribute("userName", userName);
 
-        request.getRequestDispatcher("/WEB-INF/jsp/calendar.jsp")
+        // usertype に基づいて異なるJSPにフォワード
+        String jspPath;
+        if (usertype != null && usertype == 0x01) {
+            jspPath = "/WEB-INF/jsp/user/userCalendar.jsp";
+        } else {
+            jspPath = "/WEB-INF/jsp/owner/ownerCalendar.jsp";
+        }
+
+        System.out.println("★★ CalendarServlet: フォワード先 = " + jspPath + " ★★");
+        request.getRequestDispatcher(jspPath)
                .forward(request, response);
     }
 }

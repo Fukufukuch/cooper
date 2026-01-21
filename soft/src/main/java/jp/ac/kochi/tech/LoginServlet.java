@@ -48,10 +48,11 @@ public class LoginServlet extends HttpServlet {
 		System.out.println(admin.isLogin_flag());
 
 		if(admin.isLogin_flag()) {
-			// ログイン成功 → カレンダー画面へ遷移
+			// ログイン成功 → ユーザータイプに基づいてカレンダー画面へ遷移
 			System.out.println("ログイン成功");
 			request.getSession().setAttribute("userID", user_id);
 			request.getSession().setAttribute("userName", admin.getName());
+			request.getSession().setAttribute("usertype", admin.getUsertype());
 			response.sendRedirect(request.getContextPath() + "/calendar");
 		} else {
 			// ログイン失敗 → ログイン画面へ遷移

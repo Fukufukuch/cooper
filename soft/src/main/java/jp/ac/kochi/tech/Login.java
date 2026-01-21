@@ -66,17 +66,20 @@ public class Login {
 				String dbUserID = rs.getString("userID");
 				String dbName = rs.getString("username");
 				String dbPassword = rs.getString("password");
+				int dbUsertype = rs.getInt("usertype");
 				
 				System.out.println("★★ ヒットあり ★★");
 				System.out.println("DBから取得したuserID: [" + dbUserID + "]");
 				System.out.println("DBから取得したname: [" + dbName + "]");
 				System.out.println("DBから取得したpassword: [" + dbPassword + "]");
+				System.out.println("DBから取得したusertype: [" + dbUsertype + "]");
 				System.out.println("入力されたpassword: [" + password + "]");
 				System.out.println("パスワード一致: " + dbPassword.equals(password));
 				
 				admin.setUserID(dbUserID);
 				admin.setName(dbName);
 				admin.setPassword(dbPassword);
+				admin.setUsertype(dbUsertype);
 				admin.setLogin_flag(true);
 			} else {
 				admin.setLogin_flag(false);
