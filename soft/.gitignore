@@ -1,6 +1,5 @@
-﻿target/
-soft/target/
-_wartmp/
-JavaTest/bin/
+# Maven
+target/
+
+# Java
 *.class
-*.war
