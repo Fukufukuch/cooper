@@ -8,19 +8,10 @@
 	<title>ヘルプ募集 | オートシフタ</title>
 	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 	<style>
-		/* shift.jsp のスタイルを反映 */
-		body { 
-			background-color: #f4f7f6; /* shift.jsp の背景色 */
-			font-family: sans-serif;
-		}
-		.navbar { background-color: #007bff; } /* shift.jsp のメインカラー */
-		.card { 
-			border: none; 
-			border-radius: 8px; 
-			box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* shift.jsp のシャドウ */
-		}
+		body { background-color: #f4f7f6; font-family: sans-serif; }
+		.navbar { background-color: #007bff; }
+		.card { border: none; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
 		.btn-primary { background-color: #007bff; border: none; }
-		.btn-outline-secondary { border-color: #eee; }
 		.status-badge { font-size: 0.8rem; border-radius: 4px; }
 		.list-group-item { border-left: none; border-right: none; }
 	</style>
@@ -47,16 +38,17 @@
 							<label class="form-label small fw-bold text-secondary">代わってほしい日付</label>
 							<input type="date" name="help_date" class="form-control" required>
 						</div>
-						<div class="row">
-							<div class="col-6 mb-3">
-								<label class="form-label small fw-bold text-secondary">開始時間</label>
-								<input type="time" name="time_start" class="form-control" required>
-							</div>
-							<div class="col-6 mb-3">
-								<label class="form-label small fw-bold text-secondary">終了時間</label>
-								<input type="time" name="time_end" class="form-control" required>
-							</div>
+						
+						<div class="mb-3">
+							<label class="form-label small fw-bold text-secondary">シフト区分</label>
+							<select name="shift_type" class="form-select" required>
+								<option value="" disabled selected>区分を選択してください</option>
+								<option value="早番">早番</option>
+								<option value="中番">中番</option>
+								<option value="遅番">遅番</option>
+							</select>
 						</div>
+
 						<div class="mb-4">
 							<label class="form-label small fw-bold text-secondary">代行を依頼する理由</label>
 							<textarea name="help_reason" class="form-control" rows="3" placeholder="理由を入力してください"></textarea>
@@ -73,11 +65,11 @@
 				
 				<div class="list-group shadow-sm">
 				<%
-					// Servletから渡された全募集リストを受け取る
 					List<Map<String, String>> helpList = (List<Map<String, String>>) request.getAttribute("helpList");
 					if (helpList != null && !helpList.isEmpty()) {
-						Collections.reverse(helpList);
-						for (Map<String, String> help : helpList) {
+						List<Map<String, String>> reverseList = new ArrayList<>(helpList);
+						Collections.reverse(reverseList);
+						for (Map<String, String> help : reverseList) {
 							String status = help.get("status");
 				%>
 					<div class="list-group-item p-3 bg-white">
@@ -89,7 +81,7 @@
 								<span class="badge bg-info text-white status-badge">承認待ち</span>
 							<% } %>
 						</div>
-						<p class="mb-1 small">⏰ 時間: <%= help.get("time") %></p>
+						<p class="mb-1 small">📋 シフト: <%= help.get("time") %></p>
 						<small class="text-muted d-block mt-1">
 							<strong>理由:</strong> <%= help.get("reason") %>
 						</small>
