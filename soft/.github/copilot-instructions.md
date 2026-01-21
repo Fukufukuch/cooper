@@ -4,48 +4,51 @@
 目的: このリポジトリは軽量なJava Servletウェブアプリケーションです。以下は、AIベースのコーディング支援が迅速に実務に入るための要点です。
 
 - プロジェクトの構成:
-  - ソース: src/main/java/ (例: src/main/java/HelloServlet.java)
-  - ビルド出力: bin/（README.md に準拠）
-  - 依存ライブラリ: lib/（Servlet APIなどのjarを置く）
-  - Web ルート / エントリ: index.jsp（ルート）
-  - デプロイ設定: WEB-INF/web.xml
+  - ソース: src/main/java/jp/ac/kochi/tech/ (例: src/main/java/jp/ac/kochi/tech/HelloServlet.java)
+  - Web リソース: src/main/webapp/ (JSPファイル、CSS、WEB-INF/web.xml)
+  - ビルド出力: target/classes/ (コンパイル済みクラス)、target/soft-1.0-SNAPSHOT/ (WARファイル)
+  - 依存ライブラリ: Maven依存 (pom.xml参照)、ローカルlib/ (追加jar)
+  - エントリ: index.jsp (ルート)
 
 - アーキテクチャ (ビッグピクチャ):
-  - 単純なサーブレットベースのWebアプリ。HTTPリクエストは`@WebServlet`注釈または`WEB-INF/web.xml`でマッピングされる。
-  - 静的/ビュー: ルートにあるJSPや webapp フォルダに配置されたリソースを返す想定。
-  - 実行環境: 標準的なServletコンテナ（例: Apache Tomcat）にデプロイして動作確認する。
+  - Jakarta EE 6.0ベースのServlet Webアプリ。HTTPリクエストは@WebServletアノテーションでマッピング (web.xmlはフィルタのみ)。
+  - データアクセス: DAOパターン (例: ShiftDAO.java)、DBUtil.javaでMySQL接続。
+  - ビュー: JSPファイルでレスポンス生成、JSTL使用可能。
+  - セキュリティ: AuthLoginModule.javaで認証、セッション管理。
+  - 実行環境: Servletコンテナ (Tomcat)にWARデプロイ。
 
 - 重要なプロジェクト固有の慣習/観察点:
-  - `HelloServlet.java` はパッケージ宣言が無い（デフォルトパッケージ）。そのためコンパイル後の `.class` は `WEB-INF/classes/` のルートに置く必要がある。
-  - 依存は `lib/` に置かれている想定。ローカルビルド時はこれらをクラスパスに含める。
-  - Servlet API をコンテナに含めている場合、`WEB-INF/lib` に同一のAPIを入れないよう注意（コンテナとの競合を避ける）。
+  - パッケージ: jp.ac.kochi.tech (全クラス)。
+  - データベース: MySQL (shift_db)、ハードコードクレデンシャル (DBUtil.java - 本番では環境変数化推奨)。
+  - エンコーディング: UTF-8フィルタ適用 (web.xml)。
+  - ビルド: Maven優先 (mvn compile/package)、Java 25ターゲット (プレビュー版?)。
+  - ローカルビルド: javac使用時、lib/*をクラスパスに、出力WEB-INF/classes。
 
 - ビルド / デプロイ（発見可能なワークフロー）:
-  - 手順の概略:
-    1. `javac` で `src/main/java` を `lib/*` をクラスパスにしてコンパイルし、出力先を `WEB-INF/classes` にする。
-    2. 生成した `WEB-INF/classes` と `index.jsp`, `WEB-INF/web.xml`, 必要な `lib/*.jar` を含めてWARにするか、Tomcat の webapps に配置する。
-  - Windows上の例（PowerShell / cmd で実行）:
-```bash
-mkdir -p WEB-INF/classes
-javac -cp "lib/*" -d WEB-INF/classes src/main/java/*.java
-rem 次に WEB-INF と index.jsp を含む構成をTomcatのwebapps/<app> に配置
-```
+  - Mavenビルド: `mvn compile` (クラス生成)、`mvn package` (WAR作成)。
+  - 手順の概略 (ローカル):
+    1. `mvn compile` で target/classes にコンパイル。
+    2. WARをTomcat webapps に配置、または target/soft-1.0-SNAPSHOT をコピー。
+  - Windows例: PowerShellで `mvn compile; mvn package`。
 
 - コードパターンの具体例:
-  - 注釈マッピング: `@WebServlet("/hello")`（参照: src/main/java/HelloServlet.java）
-  - `doGet(HttpServletRequest, HttpServletResponse)` をオーバーライドしてレスポンスを直接書くパターン
+  - Servlet: `@WebServlet("/path")`、doGet/doPostオーバーライド (参照: HelloServlet.java)。
+  - DAO: DBUtil.getConnection()使用、PreparedStatementでクエリ (参照: ShiftDAO.java)。
+  - JSP: <%= %> スクリプトレット、JSTLタグ (例: ShiftEditList.jsp)。
 
 - 触るときのチェックポイント（変更による影響を最小に）:
-  - `WEB-INF/web.xml` と `@WebServlet` の双方が存在する場合、どちらが優先されるか（環境依存）を意識する。
-  - `lib/` のjarを編集・更新するとコンテナのクラスローディングに影響するため、差分は小さくする。
+  - web.xml変更: フィルタ順序に注意。
+  - DB変更: スキーマ一致確認 (user, shiftテーブル)。
+  - 依存追加: pom.xml更新、scope=provided注意 (Servlet API)。
 
 - テスト・デバッグの実務ヒント:
-  - 単体テストフレームワークは見当たらない。静的変更はコンパイルしてTomcatにデプロイして確認するワークフローが基本。
-  - ローカルでの素早い検証には、`javac`→`WEB-INF/classes`配置→Tomcat再起動/再デプロイを使う。
+  - 単体テストなし: コンパイル後Tomcatデプロイで検証。
+  - ローカル検証: mvn compile → WAR配置 → Tomcat再起動。
 
 - 参考ファイル:
-  - `index.jsp`（ルートのエントリ）
-  - `WEB-INF/web.xml`（デプロイ記述）
-  - `src/main/java/HelloServlet.java`（典型的なServlet実装、注釈で `/hello` をマッピング）
+  - pom.xml (Maven設定、依存)
+  - src/main/webapp/WEB-INF/web.xml (フィルタ設定)
+  - src/main/java/jp/ac/kochi/tech/DBUtil.java (DB接続)
+  - src/main/java/jp/ac/kochi/tech/ShiftDAO.java (DAO例)
 
-フィードバックください: 不明点や追加したいワークフロー（Gradle/Maven化、CI 配備など）があれば教えてください。
+フィードバックください: 不明点や追加したいワークフロー（DBマイグレーション、CI 配備など）があれば教えてください。
