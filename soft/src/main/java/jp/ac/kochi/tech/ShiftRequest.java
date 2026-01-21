@@ -6,6 +6,9 @@ public class ShiftRequest {
     private String startTime;
     private String endTime;
     private boolean allDay;
+    private String userId;
+    private String date;
+    private String shift;
 
     public ShiftRequest() {}
 
@@ -36,5 +39,9 @@ public class ShiftRequest {
     public void setAllDay(boolean allDay) {
         this.allDay = allDay;
     }
+
+    public String getUserId() { return userId; }
+    public String getDate() { return date; }
+    public String getShift() { return shift; }
 }
 
