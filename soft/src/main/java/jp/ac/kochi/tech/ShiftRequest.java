@@ -7,7 +7,6 @@ public class ShiftRequest {
     private String endTime;
     private boolean allDay;
     private String userId;
-    private String date;
     private String shift;
 
     public ShiftRequest() {}
@@ -41,7 +40,6 @@ public class ShiftRequest {
     }
 
     public String getUserId() { return userId; }
-    public String getDate() { return date; }
     public String getShift() { return shift; }
 }
 
