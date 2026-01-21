@@ -12,16 +12,42 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import com.google.gson.Gson;
 
 @WebServlet("/submitShift")
 public class ShiftSubmitServlet extends HttpServlet {
-
 
     private static final String URL =
         "jdbc:mysql://localhost:3306/shift_db?useSSL=false&serverTimezone=Asia/Tokyo";
     private static final String USER = "cooper";
     private static final String PASSWORD = "CooperG10!";
+
+    private ShiftRequest parseJsonToShiftRequest(String json) {
+        // 例: {"timeSlotId":1,"helpDay":"2023-10-01","reason":"理由"}
+        json = json.trim().replaceAll("^\\{|\\}$", ""); // 外側{}を除去
+        String[] pairs = json.split(",");
+        int timeSlotId = 0;
+        String helpDay = "";
+        String reason = "";
+        for (String pair : pairs) {
+            String[] keyValue = pair.split(":", 2);
+            if (keyValue.length == 2) {
+                String key = keyValue[0].trim().replaceAll("^\"|\"$", "");
+                String value = keyValue[1].trim().replaceAll("^\"|\"$", "");
+                switch (key) {
+                    case "timeSlotId":
+                        timeSlotId = Integer.parseInt(value);
+                        break;
+                    case "helpDay":
+                        helpDay = value;
+                        break;
+                    case "reason":
+                        reason = value;
+                        break;
+                }
+            }
+        }
+        return new ShiftRequest(timeSlotId, helpDay, reason);
+    }
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -52,9 +78,8 @@ public class ShiftSubmitServlet extends HttpServlet {
 
         System.out.println("受信JSON: " + json);
 
-        // JSON → Java
-        Gson gson = new Gson();
-        ShiftRequest req = gson.fromJson(json, ShiftRequest.class);
+        // JSON → Java(Gsonの代わりに手動パース)
+        ShiftRequest req = parseJsonToShiftRequest(json);
 
         // DB保存
         String selectSlotSql =

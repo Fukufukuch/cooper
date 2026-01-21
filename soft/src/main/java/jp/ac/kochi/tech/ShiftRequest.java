@@ -9,6 +9,31 @@ public class ShiftRequest {
     private String userId;
     private String shift;
 
+    private int timeSlotId;
+    private String helpDay;
+    private String reason;
+
+    // コンストラクタ
+    public ShiftRequest(int timeSlotId, String helpDay, String reason) {
+        this.timeSlotId = timeSlotId;
+        this.helpDay = helpDay;
+        this.reason = reason;
+    }
+
+    // ゲッターメソッド
+    public int getTimeSlotId() {
+        return timeSlotId;
+    }
+
+    public String getHelpDay() {
+        return helpDay;
+    }
+
+    public String getReason() {
+        return reason;
+    }
+
+
     public ShiftRequest() {}
 
     public String getDate() {
