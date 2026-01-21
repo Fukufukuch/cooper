@@ -1,0 +1,48 @@
+﻿<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>設定</title>
+  <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/app.css">
+</head>
+<body>
+<div class="container">
+  <div class="h1">シフト自動生成システム</div>
+  <div class="sub">設定</div>
+
+  <%@ include file="/WEB-INF/jsp/common/owner_tabs.jspf" %>
+
+  <div class="card" style="margin-top:14px;">
+    <div class="section-title">設定メニュー</div>
+    <p class="section-desc">各機能を選んでください。</p>
+
+    <div class="form" style="margin-top:14px;">
+      <div class="action-card">
+        <div>
+          <div style="font-weight:800;">アカウント作成</div>
+          <div class="note">スタッフ用のID・パスワードを作成</div>
+        </div>
+        <a class="btn" href="${pageContext.request.contextPath}/owner/account/create">開く</a>
+      </div>
+
+      <div class="action-card">
+        <div>
+          <div style="font-weight:800;">アカウント一覧・削除</div>
+          <div class="note">スタッフ一覧の確認／削除</div>
+        </div>
+        <a class="btn" href="${pageContext.request.contextPath}/owner/people">開く</a>
+      </div>
+
+      <div class="action-card">
+        <div>
+          <div style="font-weight:800;">パスワード変更</div>
+          <div class="note">管理者パスワードを変更</div>
+        </div>
+        <a class="btn" href="${pageContext.request.contextPath}/owner/password">開く</a>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
