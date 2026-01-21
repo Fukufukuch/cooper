@@ -6,11 +6,39 @@ import java.util.Map;
 import java.util.Set;
 
 public class DummyWorkerFactory {
-    public List<TimeSlot> timeSlots = createTimeSlots();
-    public List<Position> positions = createPositions();
-    public List<Worker> workers = createWorkers();
-    public Option option = new Option(8000, 720, 1); // 月労働時間上限設定(分)
-    int days = 7; // 生成期間設定
+    private List<TimeSlot> timeSlots;
+    private List<Position> positions;
+    private List<Worker> workers;
+    private Option option;
+    private int days;
+
+    public DummyWorkerFactory() {
+        this.timeSlots = createTimeSlots();
+        this.positions = createPositions();
+        this.workers = createWorkers();
+        this.option = new Option(8000, 720, 1, 1); // 月労働時間上限設定(分)
+        this.days = 7; // 生成期間設定
+    }
+
+    public List<TimeSlot> getTimeSlots() {
+        return timeSlots;
+    }
+
+    public List<Position> getPositions() {
+        return positions;
+    }
+
+    public List<Worker> getWorkers() {
+        return workers;
+    }
+
+    public Option getOption() {
+        return option;
+    }
+
+    public int getDays() {
+        return days;
+    }
 
     public static List<Worker> createWorkers() {
         List<Worker> workers = new ArrayList<>();
