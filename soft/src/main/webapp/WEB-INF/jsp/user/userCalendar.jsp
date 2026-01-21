@@ -23,16 +23,81 @@ int nextMonth = month == 12 ? 1 : month + 1;
 <meta charset="UTF-8">
 <title>月間シフト編集</title>
 <link rel="stylesheet" href="<%= request.getContextPath() %>/css/calendar.css">
+<style>
+    /* ===== ヘッダー ===== */
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #0066cc;
+        padding-bottom: 10px;
+    }
+
+    .header-left {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .header h1 {
+        margin: 0;
+        color: #0066cc;
+        font-size: 24px;
+    }
+
+    .header .user-info {
+        font-size: 14px;
+        color: #666;
+        margin-top: 5px;
+    }
+
+    .header .user-info strong {
+        color: #0066cc;
+    }
+
+    .menu {
+        display: inline-flex;
+        background: #f1f1f1;
+        border-radius: 999px;
+        padding: 6px;
+        gap: 4px;
+    }
+
+    .menu button {
+        border: none;
+        background: transparent;
+        padding: 10px 18px;
+        border-radius: 999px;
+        cursor: pointer;
+        font-size: 14px;
+        color: #555;
+        transition: all 0.2s;
+    }
+
+    .menu button.active,
+    .menu button:hover {
+        background: #ffffff;
+        color: #000;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+</style>
 </head>
 <body>
 
 <div class="container">
 <div class="header">
-    <h1>オートシフタ</h1>
-    <div class="user-info">ログインユーザー（労働者）: <strong><%= userName %></strong></div>
+    <div class="header-left">
+        <h1>オートシフタ</h1>
+        <div class="user-info">ログインユーザー（労働者）: <strong><%= userName %></strong></div>
+    </div>
+    <nav class="menu">
+        <button class="active">📅 カレンダー</button>
+        <button>📝 シフト情報入力</button>
+        <button>🤝 ヘルプ募集</button>
+        <button>👤 スタッフ</button>
+        <button>⚙ 設定</button>
+    </nav>
 </div>
-
-<!-- <%@ include file="/WEB-INF/jsp/common/owner_tabs.jspf" %> -->
 
 <h2><%= year %>年 <%= month %>月</h2>
 
