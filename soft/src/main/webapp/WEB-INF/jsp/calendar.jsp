@@ -6,6 +6,7 @@ int year = (int) request.getAttribute("year");
 int month = (int) request.getAttribute("month");
 int daysInMonth = (int) request.getAttribute("daysInMonth");
 int startDayOfWeek = (int) request.getAttribute("startDayOfWeek");
+String userName = (String) request.getAttribute("userName");
 
 Map<Integer, List<Shift>> shiftMap =
     (Map<Integer, List<Shift>>) request.getAttribute("shiftMap");
@@ -26,6 +27,11 @@ int nextMonth = month == 12 ? 1 : month + 1;
 <body>
 
 <div class="container">
+<div class="header">
+    <h1>オートシフタ</h1>
+    <div class="user-info">ログインユーザー: <strong><%= userName %></strong></div>
+</div>
+
 <h2><%= year %>年 <%= month %>月</h2>
 
 <div class="month-nav">
