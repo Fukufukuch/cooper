@@ -1,4 +1,4 @@
-package jp.ac.kochi.tech;
+package app.servlet.user;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -9,31 +9,32 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-@WebServlet("/submitShift")
+@WebServlet("/user/shift/submit/api")
 public class ShiftSubmitServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
+        // 文字コード設定
         request.setCharacterEncoding("UTF-8");
         response.setContentType("application/json; charset=UTF-8");
 
-        // ===== JSON文字列をそのまま受け取る =====
+        // ===== リクエストボディ(JSON)を読む =====
         StringBuilder sb = new StringBuilder();
-        BufferedReader reader = request.getReader();
-        String line;
-
-        while ((line = reader.readLine()) != null) {
-            sb.append(line);
+        try (BufferedReader reader = request.getReader()) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                sb.append(line);
+            }
         }
 
         String json = sb.toString();
 
+        // デバッグ用（Tomcatログに出る）
         System.out.println("受信JSON: " + json);
 
-        // ここで json をDBに保存したり、後でパースする
-
-        response.getWriter().write("{\"status\":\"success\"}");
+        response.setStatus(HttpServletResponse.SC_OK);
+        response.getWriter().write("{\"status\":\"ok\"}");
     }
 }

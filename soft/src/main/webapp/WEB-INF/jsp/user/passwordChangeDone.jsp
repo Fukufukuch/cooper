@@ -16,9 +16,9 @@
   <div class="h1">シフト自動生成システム</div>
   <div class="sub">パスワード変更</div>
 
-  <%@ include file="/WEB-INF/jsp/common/owner_tabs.jspf" %>
+  <%@ include file="/WEB-INF/jsp/common/user_tabs.jspf" %>
 
-  <a class="backlink" href="<%= request.getContextPath() %>/owner/setting/menu">← 設定に戻る</a>
+  <a class="backlink" href="<%= request.getContextPath() %>/user/setting/menu">← 設定に戻る</a>
 
   <div class="card" style="margin-top:14px;">
     <div class="section-title">変更完了</div>
@@ -31,7 +31,7 @@
     </div>
 
     <div style="margin-top:12px;">
-      <a class="btn" href="<%= request.getContextPath() %>/owner/setting/menu">設定メニューへ</a>
+      <a class="btn" href="<%= request.getContextPath() %>/user/setting/menu">設定メニューへ</a>
     </div>
   </div>
 </div>

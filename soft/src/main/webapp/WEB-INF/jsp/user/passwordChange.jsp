@@ -16,9 +16,9 @@
   <div class="h1">シフト自動生成システム</div>
   <div class="sub">パスワード変更</div>
 
-  <%@ include file="/WEB-INF/jsp/common/owner_tabs.jspf" %>
+  <%@ include file="/WEB-INF/jsp/common/user_tabs.jspf" %>
 
-  <a class="backlink" href="<%= request.getContextPath() %>/owner/setting/menu">← 設定に戻る</a>
+  <a class="backlink" href="<%= request.getContextPath() %>/user/setting/menu">← 設定に戻る</a>
 
   <div class="card" style="margin-top:14px;">
     <div class="section-title">パスワード変更</div>
@@ -27,7 +27,7 @@
       <div class="alert danger"><%= error %></div>
     <% } %>
 
-    <form method="post" action="<%= request.getContextPath() %>/owner/password">
+    <form method="post" action="<%= request.getContextPath() %>/user/password">
       <div class="form-row">
         <label>ユーザーID</label>
         <input class="input" type="text" name="userID" required>

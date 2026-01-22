@@ -126,7 +126,7 @@
 
         <main>
             <div class="settings-grid">
-                <div class="settings-item">
+                <div class="settings-item" id="passwordChange">
                     <div class="settings-title">パスワード変更</div>
                 </div>
 
@@ -138,8 +138,11 @@
     </body>
 
     <script>
+        document.getElementById("passwordChange").addEventListener("click", () => {
+            location.href = "<%= request.getContextPath() %>/user/password";
+        });
         document.getElementById("logout").addEventListener("click", () => {
-            location.href = "login.jsp";
+            location.href = "<%= request.getContextPath() %>/login";
         });
     </script>
 </html>

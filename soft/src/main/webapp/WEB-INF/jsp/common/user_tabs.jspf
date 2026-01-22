@@ -1,0 +1,32 @@
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%
+  String activeTab = (String) request.getAttribute("activeTab");
+  if (activeTab == null) activeTab = "";
+%>
+
+<div class="navbar">
+  <a class="navitem <%= "calendar".equals(activeTab) ? "active" : "" %>"
+     href="${pageContext.request.contextPath}/calendar">
+    <span class="ico">■</span><span>カレンダー</span>
+  </a>
+
+  <a class="navitem <%= "submit".equals(activeTab) ? "active" : "" %>"
+     href="${pageContext.request.contextPath}/user/shift/submit">
+    <span class="ico">■</span><span>シフト希望入力</span>
+  </a>
+
+  <a class="navitem <%= "help".equals(activeTab) ? "active" : "" %>"
+     href="${pageContext.request.contextPath}/owner/help">
+    <span class="ico">■</span><span>ヘルプ募集</span>
+  </a>
+
+  <a class="navitem <%= "people".equals(activeTab) ? "active" : "" %>"
+     href="${pageContext.request.contextPath}/owner/people">
+    <span class="ico">■</span><span>ヘルプ応答</span>
+  </a>
+
+  <a class="navitem <%= "setting".equals(activeTab) ? "active" : "" %>"
+     href="${pageContext.request.contextPath}/user/setting/menu">
+    <span class="ico">■</span><span>設定</span>
+  </a>
+</div>
