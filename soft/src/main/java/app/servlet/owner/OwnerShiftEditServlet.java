@@ -38,6 +38,7 @@ public class OwnerShiftEditServlet extends HttpServlet {
             req.setAttribute("rows", dao.findByDateRange(from, to)); // ← JSP側が rows を見てるなら rows
             req.setAttribute("year", year);
             req.setAttribute("month", month);
+            req.setAttribute("activeTab", "shift");
 
             req.getRequestDispatcher("/WEB-INF/jsp/owner/shift_edit.jsp").forward(req, resp);
 

@@ -81,6 +81,7 @@ public class CalendarServlet extends HttpServlet {
         request.setAttribute("startDayOfWeek", startDayOfWeek);
         request.setAttribute("shiftMap", shiftMap);
         request.setAttribute("userName", userName);
+        request.setAttribute("activeTab", "calendar");
 
         // usertype に基づいて異なるJSPにフォワード
         String jspPath;

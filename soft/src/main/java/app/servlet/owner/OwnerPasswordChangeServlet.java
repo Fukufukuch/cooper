@@ -17,6 +17,7 @@ public class OwnerPasswordChangeServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
+        req.setAttribute("activeTab", "setting");
         req.getRequestDispatcher("/WEB-INF/jsp/owner/password_change.jsp").forward(req, resp);
     }
 
@@ -36,12 +37,14 @@ public class OwnerPasswordChangeServlet extends HttpServlet {
 
             if (!ok) {
                 req.setAttribute("error", "ユーザーIDか現在のパスワードが違います。");
+                req.setAttribute("activeTab", "setting");
                 req.getRequestDispatcher("/WEB-INF/jsp/owner/password_change.jsp").forward(req, resp);
                 return;
             }
 
             // ✅ 完了画面へ
             req.setAttribute("userID", userID);
+            req.setAttribute("activeTab", "setting");
             req.getRequestDispatcher("/WEB-INF/jsp/owner/password_change_done.jsp")
                .forward(req, resp);
 

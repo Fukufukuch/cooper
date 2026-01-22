@@ -15,6 +15,7 @@ public class OwnerSettingMenuServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
+        req.setAttribute("activeTab", "setting");
         req.getRequestDispatcher("/WEB-INF/jsp/owner/setting_menu.jsp")
            .forward(req, resp);
     }

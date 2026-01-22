@@ -26,6 +26,7 @@ public class OwnerPeopleDeleteServlet extends HttpServlet {
 
             req.setAttribute("deleted", ok);
             req.setAttribute("userID", userID);
+            req.setAttribute("activeTab", "people");
             req.getRequestDispatcher("/WEB-INF/jsp/owner/people_delete_done.jsp").forward(req, resp);
 
         } catch (Exception e) {

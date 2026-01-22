@@ -6,12 +6,12 @@ import java.sql.SQLException;
 
 public class Db {
 
-    private static final String HOST = "localhost";
+    private static final String HOST = "3.221.253.103";
     private static final String PORT = "3306";
     private static final String DB   = "shift_db";
 
-    private static final String USER = "root";
-    private static final String PASS = "CooperG10!";   // ← rootのパス
+    private static final String USER = "cooper";
+    private static final String PASS = "CooperG10!";   // ← Cooperのパス
 
     private static final String URL =
             "jdbc:mysql://" + HOST + ":" + PORT + "/" + DB +

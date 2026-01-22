@@ -5,6 +5,11 @@
 %>
 
 <div class="navbar">
+  <a class="navitem <%= "calendar".equals(activeTab) ? "active" : "" %>"
+     href="${pageContext.request.contextPath}/calendar">
+    <span class="ico">■</span><span>カレンダー</span>
+  </a>
+
   <a class="navitem <%= "shift".equals(activeTab) ? "active" : "" %>"
      href="${pageContext.request.contextPath}/owner/shift/edit">
     <span class="ico">■</span><span>シフト編集</span>

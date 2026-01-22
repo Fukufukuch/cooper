@@ -27,6 +27,7 @@ public class OwnerPeopleServlet extends HttpServlet {
 
             // JSPが staffList を見てるので名前は合わせる
             req.setAttribute("staffList", users);
+            req.setAttribute("activeTab", "people");
 
             req.getRequestDispatcher("/WEB-INF/jsp/owner/people_list.jsp").forward(req, resp);
 
