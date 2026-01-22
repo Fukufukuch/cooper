@@ -34,12 +34,14 @@ public class OwnerPeopleEditServlet extends HttpServlet {
 
             if (u == null) {
                 req.setAttribute("error", "対象ユーザーが見つかりません。");
+                req.setAttribute("activeTab", "people");
                 req.getRequestDispatcher("/WEB-INF/jsp/owner/people_edit.jsp")
                    .forward(req, resp);
                 return;
             }
 
             req.setAttribute("user", u);
+            req.setAttribute("activeTab", "people");
             req.getRequestDispatcher("/WEB-INF/jsp/owner/people_edit.jsp")
                .forward(req, resp);
 
@@ -86,6 +88,7 @@ public class OwnerPeopleEditServlet extends HttpServlet {
             back.setWorkPlace(workPlace);
 
             req.setAttribute("user", back);
+            req.setAttribute("activeTab", "people");
             req.getRequestDispatcher("/WEB-INF/jsp/owner/people_edit.jsp")
                .forward(req, resp);
             return;
@@ -99,6 +102,7 @@ public class OwnerPeopleEditServlet extends HttpServlet {
             dob = Date.valueOf(dobStr);
         } catch (Exception e) {
             req.setAttribute("error", "生年月日の形式が不正です。");
+            req.setAttribute("activeTab", "people");
             req.getRequestDispatcher("/WEB-INF/jsp/owner/people_edit.jsp")
                .forward(req, resp);
             return;
