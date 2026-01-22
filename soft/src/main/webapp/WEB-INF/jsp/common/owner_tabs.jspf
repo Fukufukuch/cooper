@@ -1,0 +1,27 @@
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%
+  String activeTab = (String) request.getAttribute("activeTab");
+  if (activeTab == null) activeTab = "";
+%>
+
+<div class="navbar">
+  <a class="navitem <%= "shift".equals(activeTab) ? "active" : "" %>"
+     href="${pageContext.request.contextPath}/owner/shift/edit">
+    <span class="ico">■</span><span>シフト編集</span>
+  </a>
+
+  <a class="navitem <%= "help".equals(activeTab) ? "active" : "" %>"
+     href="${pageContext.request.contextPath}/owner/help">
+    <span class="ico">■</span><span>承認待ち</span>
+  </a>
+
+  <a class="navitem <%= "people".equals(activeTab) ? "active" : "" %>"
+     href="${pageContext.request.contextPath}/owner/people">
+    <span class="ico">■</span><span>スタッフ</span>
+  </a>
+
+  <a class="navitem <%= "setting".equals(activeTab) ? "active" : "" %>"
+     href="${pageContext.request.contextPath}/owner/setting/menu">
+    <span class="ico">■</span><span>設定</span>
+  </a>
+</div>
