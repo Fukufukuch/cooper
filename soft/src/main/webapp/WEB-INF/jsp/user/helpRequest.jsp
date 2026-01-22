@@ -37,35 +37,39 @@
 						<div class="mb-3">
 							<label class="form-label small fw-bold text-secondary">代わってほしい日付</label>
 							<select name="help_date" class="form-select" required>
-							<option value="" disabled selected>日付を選択してください</option>
-							<%
-								List<String> shiftDateList =
-									(List<String>) request.getAttribute("shiftDateList");
-								for (String d : shiftDateList) {
-							%>
-								<option value="<%= d %>"><%= d %></option>
-							<%
-								}
-							%>
+								<option value="" disabled selected>日付を選択してください</option>
+								<%
+									List<String> shiftDates =
+										(List<String>) request.getAttribute("shiftDates");
+									if (shiftDates != null) {
+										for (String d : shiftDates) {
+								%>
+									<option value="<%= d %>"><%= d %></option>
+								<%
+										}
+									}
+								%>
 							</select>
 						</div>
 						
 						<div class="mb-3">
 							<label class="form-label small fw-bold text-secondary">シフト区分</label>
-								<select name="shift_type" class="form-select" required>
-							<option value="" disabled selected>区分を選択してください</option>
-							<%
-								List<Map<String, Object>> timeSlotList =
-									(List<Map<String, Object>>) request.getAttribute("timeSlotList");
-								for (Map<String, Object> slot : timeSlotList) {
-							%>
-								<option value="<%= slot.get("id") %>">
-									<%= slot.get("name") %>
-								</option>
-							<%
-								}
-							%>
-						</select>	
+								<select name="timeslot_id" class="form-select" required>
+									<option value="" disabled selected>区分を選択してください</option>
+									<%
+										List<Map<String, Object>> timeSlots =
+											(List<Map<String, Object>>) request.getAttribute("timeSlots");
+										if (timeSlots != null) {
+											for (Map<String, Object> slot : timeSlots) {
+									%>
+										<option value="<%= slot.get("id") %>">
+											<%= slot.get("name") %>
+										</option>
+									<%
+											}
+										}
+									%>
+								</select>	
 						</div>
 
 						<div class="mb-4">

@@ -9,107 +9,147 @@ import java.io.IOException;
 import java.util.*;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+
+import jp.ac.kochi.tech.DBconfig;
 
 @WebServlet("/HelpRequestServlet")
 public class HelpRequestServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 
-	// ★ DB接続情報を追加 ★
-    private static final String URL =
-        "jdbc:mysql://localhost:3306/shift_db?useSSL=false&serverTimezone=Asia/Tokyo";
-    private static final String USER = "cooper";
-    private static final String PASSWORD = "CooperG10!";
-
-	private static List<Map<String, String>> helpList = new ArrayList<>();
-
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) 
 			throws ServletException, IOException {
 		
-
-		List<Map<String, Object>> timeSlotList = new ArrayList<>();
-    	List<String> shiftDateList = new ArrayList<>();
 		String userId = "USER_KOSHIRO"; // 本来はセッション
-		try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD)) {
 
-        // --- TimeSlot 取得 ---
-        String slotSql = "SELECT id, name FROM TimeSlot WHERE is_active = true";
-        try (PreparedStatement ps = conn.prepareStatement(slotSql);
-             ResultSet rs = ps.executeQuery()) {
+		try (Connection con = DBconfig.getConnection()) {
 
-            while (rs.next()) {
+            // ① 自分のシフト日一覧（重複除去）
+            String sqlDate = """
+                SELECT DISTINCT date
+                FROM shift
+                WHERE workerID = ?
+                ORDER BY date
+            """;
+            PreparedStatement psDate = con.prepareStatement(sqlDate);
+            psDate.setString(1, userId);
+            ResultSet rsDate = psDate.executeQuery();
+
+            List<String> shiftDates = new ArrayList<>();
+            while (rsDate.next()) {
+                shiftDates.add(rsDate.getString("date"));
+            }
+			
+			/* ② TimeSlot 一覧 */
+            String sqlSlot = "SELECT * FROM timeslot ORDER BY start_minute";
+            PreparedStatement psSlot = con.prepareStatement(sqlSlot);
+            ResultSet rsSlot = psSlot.executeQuery();
+
+            List<Map<String, Object>> timeSlots = new ArrayList<>();
+            while (rsSlot.next()) {
                 Map<String, Object> slot = new HashMap<>();
-                slot.put("id", rs.getInt("id"));
-                slot.put("name", rs.getString("name"));
-                timeSlotList.add(slot);
+                slot.put("id", rsSlot.getInt("id"));
+                slot.put("name", rsSlot.getString("name"));
+                slot.put("start", rsSlot.getInt("start_minute"));
+                slot.put("end", rsSlot.getInt("end_minute"));
+                timeSlots.add(slot);
             }
+
+            // ② 自分の募集履歴
+            String sqlHelp = """
+                SELECT help_want_day, help_want_time_start, help_want_time_end,
+                       help_reason, apply
+                FROM help
+                WHERE help_want_userID = ?
+                ORDER BY helpID DESC
+            """;
+            PreparedStatement psHelp = con.prepareStatement(sqlHelp);
+            psHelp.setString(1, userId);
+            ResultSet rsHelp = psHelp.executeQuery();
+
+            List<Map<String, String>> helpList = new ArrayList<>();
+            while (rsHelp.next()) {
+                Map<String, String> h = new HashMap<>();
+                h.put("date", rsHelp.getString("help_want_day"));
+                h.put("time",
+                        rsHelp.getString("help_want_time_start")
+                        + "〜"
+                        + rsHelp.getString("help_want_time_end"));
+                h.put("reason", rsHelp.getString("help_reason"));
+                h.put("status", rsHelp.getString("apply"));
+                helpList.add(h);
+            }
+
+            request.setAttribute("shiftDates", shiftDates);
+			request.setAttribute("timeSlots", timeSlots);
+            request.setAttribute("helpList", helpList);
+
+        } catch (Exception e) {
+            throw new ServletException(e);
         }
 
-        // --- Shift 日付取得 ---
-        String shiftSql =
-            "SELECT DISTINCT date FROM Shift WHERE workerID = ? ORDER BY date";
-        try (PreparedStatement ps = conn.prepareStatement(shiftSql)) {
-            ps.setString(1, userId);
-            ResultSet rs = ps.executeQuery();
-
-            while (rs.next()) {
-                shiftDateList.add(rs.getDate("date").toString());
-            }
-        }
-
-    } catch (Exception e) {
-        throw new ServletException(e);
+        RequestDispatcher dispatcher =
+                request.getRequestDispatcher("/WEB-INF/jsp/user/helpRequest.jsp");
+        dispatcher.forward(request, response);
     }
 
-		request.setAttribute("timeSlotList", timeSlotList);
-    	request.setAttribute("shiftDateList", shiftDateList);
-		// 現在の募集リストをリクエスト属性にセット
-		request.setAttribute("helpList", helpList);//保存されている全募集データのリストを、次に表示するJSP画面へ「荷物」として預けてい
-		
-		// 規約に基づきWEB-INF配下のJSPへフォワード
-		RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/jsp/user/helpRequest.jsp");//jspの場所を指定
-		dispatcher.forward(request, response);//指定したJSP画面に処理をバトンタッチ（転送）し、画面を表示
-	}
+    // =========================
+    // POST：募集登録
+    // =========================
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
 
-	/**
-	 * ヘルプ募集フォームからの投稿を処理する
-	 */
-	@Override
-	protected void doPost(HttpServletRequest request, HttpServletResponse response) 
-			throws ServletException, IOException {
+        request.setCharacterEncoding("UTF-8");
 
-		// 文字コードとコンテンツタイプの設定（LoginServlet.java参照）
-		response.setContentType("text/html; charset=UTF-8");
-		request.setCharacterEncoding("UTF-8");
+        String helpDate = request.getParameter("help_date");
+        int shiftId = Integer.parseInt(request.getParameter("shift_id"));
+        String reason = request.getParameter("help_reason");
 
-		// フォームから入力値を取得（修正箇所）
-		String date = request.getParameter("help_date");
-		String shiftType = request.getParameter("shift_type"); // プルダウンから取得
-		String reason = request.getParameter("help_reason");
-		
-		String userId = "USER_KOSHIRO"; 
+        String userId = "USER_KOSHIRO"; // session想定
 
-		// 1件分データ
-		Map<String, String> help = new HashMap<>();
-		help.put("id", UUID.randomUUID().toString());
-		help.put("userId", userId);
-		help.put("date", date);
-		// キー名は "time" のままにしておくことで、JSP側の表示ロジックを変更せずに済みます
-		help.put("time", shiftType); 
-		help.put("reason", reason);
-		help.put("status", "0"); 
+        try (Connection con = DBconfig.getConnection()) {
 
-		helpList.add(help);
+            /* TimeSlot → 時刻変換 */
+            String sqlSlot = "SELECT startminute, endminute FROM timeslot WHERE id = ?";
+            PreparedStatement psSlot = con.prepareStatement(sqlSlot);
+            psSlot.setInt(1, shiftId);
+            ResultSet rs = psSlot.executeQuery();
 
-		request.setAttribute("helpList", helpList);
-		RequestDispatcher dispatcher = request.getRequestDispatcher("/helpRequest.jsp");
-		dispatcher.forward(request, response);
-	}
+            if (!rs.next()) {
+                throw new ServletException("TimeSlot not found");
+            }
 
-	public static List<Map<String, String>> getHelpList() {
-		return helpList;
-	}
+            int startMin = rs.getInt("start_minute");
+            int endMin = rs.getInt("end_minute");
+
+            String startTime = String.format("%02d:%02d", startMin / 60, startMin % 60);
+            String endTime = String.format("%02d:%02d", endMin / 60, endMin % 60);
+
+            /* help テーブルへ保存 */
+            String sql = """
+                INSERT INTO help
+                (help_want_userID, help_want_day,
+                 help_want_time_start, help_want_time_end,
+                 help_reason, apply)
+                VALUES (?, ?, ?, ?, ?, 0)
+            """;
+
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setString(1, userId);
+            ps.setString(2, helpDate);
+            ps.setString(3, startTime);
+            ps.setString(4, endTime);
+            ps.setString(5, reason);
+            ps.executeUpdate();
+
+        } catch (Exception e) {
+            throw new ServletException(e);
+        }
+
+        // 二重送信防止（PRGパターン）
+        response.sendRedirect(request.getContextPath() + "/HelpRequestServlet");
+    }
 }

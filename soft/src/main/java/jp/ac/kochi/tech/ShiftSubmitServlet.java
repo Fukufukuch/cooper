@@ -83,7 +83,7 @@ public class ShiftSubmitServlet extends HttpServlet {
 
         // DB保存
         String selectSlotSql =
-            "SELECT startMinute, endMinute FROM TimeSlot WHERE id = ?";
+            "SELECT start_minute, end_minute FROM timeslot WHERE id = ?";
 
         String insertHelpSql =
             "INSERT INTO help (" +
@@ -105,8 +105,8 @@ public class ShiftSubmitServlet extends HttpServlet {
                     return;
                 }
 
-                startMinute = rs.getInt("startMinute");
-                endMinute = rs.getInt("endMinute");
+                startMinute = rs.getInt("start_minute");
+                endMinute = rs.getInt("endminute");
             }
 
             // 分 → Time に変換
