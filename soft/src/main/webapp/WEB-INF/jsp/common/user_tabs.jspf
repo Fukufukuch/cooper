@@ -10,23 +10,23 @@
     <span class="ico">■</span><span>カレンダー</span>
   </a>
 
-  <a class="navitem <%= "shift".equals(activeTab) ? "active" : "" %>"
-     href="${pageContext.request.contextPath}/owner/shift/edit">
-    <span class="ico">■</span><span>シフト編集</span>
+  <a class="navitem <%= "submit".equals(activeTab) ? "active" : "" %>"
+     href="${pageContext.request.contextPath}/user/shift/submit">
+    <span class="ico">■</span><span>シフト希望入力</span>
   </a>
 
   <a class="navitem <%= "help".equals(activeTab) ? "active" : "" %>"
      href="${pageContext.request.contextPath}/owner/help">
-    <span class="ico">■</span><span>承認待ち</span>
+    <span class="ico">■</span><span>ヘルプ募集</span>
   </a>
 
   <a class="navitem <%= "people".equals(activeTab) ? "active" : "" %>"
      href="${pageContext.request.contextPath}/owner/people">
-    <span class="ico">■</span><span>スタッフ</span>
+    <span class="ico">■</span><span>ヘルプ応答</span>
   </a>
 
   <a class="navitem <%= "setting".equals(activeTab) ? "active" : "" %>"
-     href="${pageContext.request.contextPath}/owner/setting/menu">
+     href="${pageContext.request.contextPath}/user/setting/menu">
     <span class="ico">■</span><span>設定</span>
   </a>
 </div>

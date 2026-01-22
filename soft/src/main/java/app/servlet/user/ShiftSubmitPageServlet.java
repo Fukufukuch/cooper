@@ -1,4 +1,6 @@
-package app.servlet.owner;
+package app.servlet.user;
+
+import java.io.IOException;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -6,17 +8,16 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import java.io.IOException;
-
-@WebServlet("/owner/setting/menu")
-public class OwnerSettingMenuServlet extends HttpServlet {
+@WebServlet("/user/shift/submit")
+public class ShiftSubmitPageServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
-        req.setAttribute("activeTab", "setting");
-        req.getRequestDispatcher("/WEB-INF/jsp/owner/setting_menu.jsp")
+        req.setAttribute("activeTab", "submit");
+        req.getRequestDispatcher("/WEB-INF/jsp/user/shiftSubmit.jsp")
            .forward(req, resp);
     }
 }
+

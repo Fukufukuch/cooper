@@ -14,6 +14,15 @@ import java.sql.ResultSet;
 
 import jp.ac.kochi.tech.DBconfig;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+
+import jp.ac.kochi.tech.DBconfig;
+
+/**
+ * 労働者がヘルプ募集（シフト代行依頼）を投稿し、一時保存するサーブレット
+ */
 @WebServlet("/HelpRequestServlet")
 public class HelpRequestServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
@@ -153,3 +162,16 @@ public class HelpRequestServlet extends HttpServlet {
         response.sendRedirect(request.getContextPath() + "/HelpRequestServlet");
     }
 }
+
+/**処理の大まかな流れ
+ * 1 helpRequest.jsp を表示
+ * 
+ * 2 募集を投稿する (doPost)
+ * 　1 ユーザーが日付や理由を入力して「投稿」ボタンを押す
+ * 　2 現在ログインしているのが誰か (userId) を特定
+ * 　3 画面から入力された「日付」「時間」「理由」を読み取る
+ * 　4 この募集を特定するためのID生成
+ * 　5 「誰が・いつ・何の理由で」という情報をセットにし、
+ * 　　　状態を 0 (募集中) として共有リストに追加
+ * 　6 再び募集画面を表示
+ */

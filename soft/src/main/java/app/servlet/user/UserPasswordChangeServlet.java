@@ -1,4 +1,4 @@
-package app.servlet.owner;
+package app.servlet.user;
 
 import app.dao.UserDao;
 
@@ -10,15 +10,15 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 
-@WebServlet("/owner/password")
-public class OwnerPasswordChangeServlet extends HttpServlet {
+@WebServlet("/user/password")
+public class UserPasswordChangeServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
         req.setAttribute("activeTab", "setting");
-        req.getRequestDispatcher("/WEB-INF/jsp/owner/password_change.jsp").forward(req, resp);
+        req.getRequestDispatcher("/WEB-INF/jsp/user/passwordChange.jsp").forward(req, resp);
     }
 
     @Override
@@ -38,14 +38,14 @@ public class OwnerPasswordChangeServlet extends HttpServlet {
             if (!ok) {
                 req.setAttribute("error", "ユーザーIDか現在のパスワードが違います。");
                 req.setAttribute("activeTab", "setting");
-                req.getRequestDispatcher("/WEB-INF/jsp/owner/password_change.jsp").forward(req, resp);
+                req.getRequestDispatcher("/WEB-INF/jsp/user/passwordChange.jsp").forward(req, resp);
                 return;
             }
 
             // ✅ 完了画面へ
             req.setAttribute("userID", userID);
             req.setAttribute("activeTab", "setting");
-            req.getRequestDispatcher("/WEB-INF/jsp/owner/password_change_done.jsp")
+            req.getRequestDispatcher("/WEB-INF/jsp/user/passwordChangeDone.jsp")
                .forward(req, resp);
 
         } catch (Exception e) {
@@ -53,3 +53,4 @@ public class OwnerPasswordChangeServlet extends HttpServlet {
         }
     }
 }
+

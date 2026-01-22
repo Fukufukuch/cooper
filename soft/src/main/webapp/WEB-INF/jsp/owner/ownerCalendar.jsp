@@ -1,4 +1,4 @@
-<%@ page contentType="text/html; charset=UTF-8" %>
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="java.util.*, jp.ac.kochi.tech.soft.model.Shift" %>
 
 <%
@@ -15,30 +15,32 @@ int prevYear = month == 1 ? year - 1 : year;
 int prevMonth = month == 1 ? 12 : month - 1;
 int nextYear = month == 12 ? year + 1 : year;
 int nextMonth = month == 12 ? 1 : month + 1;
+
+request.setAttribute("activeTab", "calendar");
 %>
 
 <!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
-<title>月間シフト編集</title>
+<title>カレンダー</title>
+<link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/app.css">
 <link rel="stylesheet" href="<%= request.getContextPath() %>/css/calendar.css">
 </head>
 <body>
 
 <div class="container">
-<div class="header">
-    <h1>オートシフタ</h1>
-    <div class="user-info">ログインユーザー（管理者）: <strong><%= userName %></strong></div>
-</div>
+<div class="h1">シフト自動生成システム</div>
+<div class="sub">カレンダー</div>
 
 <%@ include file="/WEB-INF/jsp/common/owner_tabs.jspf" %>
 
-<h2><%= year %>年 <%= month %>月</h2>
+<div class="card" style="margin-top:14px;">
+<div class="section-title"><%= year %>年 <%= month %>月</div>
 
-<div class="month-nav">
-<a href="calendar?year=<%= prevYear %>&month=<%= prevMonth %>">◀</a>
-<a href="calendar?year=<%= nextYear %>&month=<%= nextMonth %>">▶</a>
+<div style="display: flex; justify-content: center; gap: 20px; margin-bottom: 14px;">
+  <a href="calendar?year=<%= prevYear %>&month=<%= prevMonth %>" style="font-size: 18px; color: #0066cc; text-decoration: none; font-weight: bold;">◀ 前月</a>
+  <a href="calendar?year=<%= nextYear %>&month=<%= nextMonth %>" style="font-size: 18px; color: #0066cc; text-decoration: none; font-weight: bold;">次月 ▶</a>
 </div>
 
 <table class="calendar">
@@ -84,5 +86,6 @@ cell++;
 </table>
 </div>
 
+</div>
 </body>
 </html>

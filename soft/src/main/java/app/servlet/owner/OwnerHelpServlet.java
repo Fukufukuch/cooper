@@ -20,6 +20,7 @@ public class OwnerHelpServlet extends HttpServlet {
         try {
             RequestDao dao = new RequestDao();
             req.setAttribute("requestList", dao.listAll());
+            req.setAttribute("activeTab", "help");
             req.getRequestDispatcher("/WEB-INF/jsp/owner/help_list.jsp").forward(req, resp);
 
         } catch (Exception e) {
