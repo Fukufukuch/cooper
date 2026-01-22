@@ -4,6 +4,10 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.util.Map;
+import java.sql.SQLException;
 
 public class DBconfig {
 
@@ -42,5 +46,18 @@ public class DBconfig {
 		// getDBinfoメソッドが呼び出された際に
 		// 『接続情報、ユーザ名、パスワード』の情報を返す
 		return getDBinfoForMap;
+    }
+
+    public static Connection getConnection() throws Exception {
+        DBconfig config = new DBconfig();
+        Map<String, String> info = config.getDBinfo();
+
+        Class.forName("com.mysql.cj.jdbc.Driver");
+
+        return DriverManager.getConnection(
+            info.get("url"),
+            info.get("user"),
+            info.get("password")
+        );
     }
 }
