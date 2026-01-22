@@ -8,11 +8,19 @@ import jakarta.servlet.http.*;
 import java.io.IOException;
 import java.util.*;
 
+/**
+ * 労働者がヘルプ募集（シフト代行依頼）を投稿し、一時保存するサーブレット
+ */
 @WebServlet("/HelpRequestServlet")
 public class HelpRequestServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
-	private static List<Map<String, String>> helpList = new ArrayList<>();
 
+	
+	private static List<Map<String, String>> helpList = new ArrayList<>();//データを一時的に保存するための箱
+
+	/**
+	 * ヘルプ募集画面を表示する
+	 */
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) 
 			throws ServletException, IOException {
@@ -21,7 +29,7 @@ public class HelpRequestServlet extends HttpServlet {
 		request.setAttribute("helpList", helpList);//保存されている全募集データのリストを、次に表示するJSP画面へ「荷物」として預けてい
 		
 		// 規約に基づきWEB-INF配下のJSPへフォワード
-		RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/jsp/user/helpRequest.jsp");//jspの場所を指定
+		RequestDispatcher dispatcher = request.getRequestDispatcher("/helpRequest.jsp");//jspの場所を指定
 		dispatcher.forward(request, response);//指定したJSP画面に処理をバトンタッチ（転送）し、画面を表示
 	}
 
@@ -60,41 +68,29 @@ public class HelpRequestServlet extends HttpServlet {
 
 		// リストを属性にセットして再表示
 		request.setAttribute("helpList", helpList);
-		RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/jsp/user/helpRequest.jsp");
-		dispatcher.forward(request, response);
-	}
-
-	@Override
-	protected void doPost(HttpServletRequest request, HttpServletResponse response) 
-			throws ServletException, IOException {
-
-		response.setContentType("text/html; charset=UTF-8");
-		request.setCharacterEncoding("UTF-8");
-
-		// フォームから入力値を取得（修正箇所）
-		String date = request.getParameter("help_date");
-		String shiftType = request.getParameter("shift_type"); // プルダウンから取得
-		String reason = request.getParameter("help_reason");
-		
-		String userId = "USER_KOSHIRO"; 
-
-		Map<String, String> help = new HashMap<>();
-		help.put("id", UUID.randomUUID().toString());
-		help.put("userId", userId);
-		help.put("date", date);
-		// キー名は "time" のままにしておくことで、JSP側の表示ロジックを変更せずに済みます
-		help.put("time", shiftType); 
-		help.put("reason", reason);
-		help.put("status", "0"); 
-
-		helpList.add(help);
-
-		request.setAttribute("helpList", helpList);
 		RequestDispatcher dispatcher = request.getRequestDispatcher("/helpRequest.jsp");
 		dispatcher.forward(request, response);
 	}
 
+	/**
+	 * 他のサーブレットからヘルプリストを参照するための公開メソッド
+	 * 他のプログラムから、
+	 * この保存リストを覗き見ることができるようにするための窓口
+	 */
 	public static List<Map<String, String>> getHelpList() {
 		return helpList;
 	}
 }
+
+/**処理の大まかな流れ
+ * 1 helpRequest.jsp を表示
+ * 
+ * 2 募集を投稿する (doPost)
+ * 　1 ユーザーが日付や理由を入力して「投稿」ボタンを押す
+ * 　2 現在ログインしているのが誰か (userId) を特定
+ * 　3 画面から入力された「日付」「時間」「理由」を読み取る
+ * 　4 この募集を特定するためのID生成
+ * 　5 「誰が・いつ・何の理由で」という情報をセットにし、
+ * 　　　状態を 0 (募集中) として共有リストに追加
+ * 　6 再び募集画面を表示
+ */
