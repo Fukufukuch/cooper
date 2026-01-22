@@ -144,13 +144,12 @@
                 ? "終日勤務可能"
                 : shift.startTime + " 〜 " + shift.endTime;
 
-            card.innerHTML = `
-                <div class="shift-info">
-                    <div class="shift-date">📅 ${shift.date}</div>
-                    <div class="shift-time">⏰ ${timeText}</div>
-                </div>
-                <button class="delete-btn" onclick="removeShift(${index})">🗑</button>
-            `;
+            card.innerHTML =
+                '<div class="shift-info">' +
+                '<div class="shift-date">📅 ' + shift.date + '</div>' +
+                '<div class="shift-time">⏰ ' + timeText + '</div>' +
+                '</div>' +
+                '<button class="delete-btn" onclick="removeShift(' + index + ')">🗑</button>';
 
             shiftList.appendChild(card);
         });
