@@ -36,17 +36,40 @@
 					<form action="${pageContext.request.contextPath}/HelpRequestServlet" method="post">
 						<div class="mb-3">
 							<label class="form-label small fw-bold text-secondary">代わってほしい日付</label>
-							<input type="date" name="help_date" class="form-control" required>
+							<select name="help_date" class="form-select" required>
+								<option value="" disabled selected>日付を選択してください</option>
+								<%
+									List<String> shiftDates =
+										(List<String>) request.getAttribute("shiftDates");
+									if (shiftDates != null) {
+										for (String d : shiftDates) {
+								%>
+									<option value="<%= d %>"><%= d %></option>
+								<%
+										}
+									}
+								%>
+							</select>
 						</div>
 						
 						<div class="mb-3">
 							<label class="form-label small fw-bold text-secondary">シフト区分</label>
-							<select name="shift_type" class="form-select" required>
-								<option value="" disabled selected>区分を選択してください</option>
-								<option value="早番">早番</option>
-								<option value="中番">中番</option>
-								<option value="遅番">遅番</option>
-							</select>
+								<select name="timeslot_id" class="form-select" required>
+									<option value="" disabled selected>区分を選択してください</option>
+									<%
+										List<Map<String, Object>> timeSlots =
+											(List<Map<String, Object>>) request.getAttribute("timeSlots");
+										if (timeSlots != null) {
+											for (Map<String, Object> slot : timeSlots) {
+									%>
+										<option value="<%= slot.get("id") %>">
+											<%= slot.get("name") %>
+										</option>
+									<%
+											}
+										}
+									%>
+								</select>	
 						</div>
 
 						<div class="mb-4">
