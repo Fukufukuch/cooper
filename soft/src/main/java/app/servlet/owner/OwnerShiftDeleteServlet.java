@@ -17,21 +17,12 @@ public class OwnerShiftDeleteServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
-        req.setCharacterEncoding("UTF-8");
-
-        int shiftID = Integer.parseInt(req.getParameter("shiftID"));
-        String year = req.getParameter("year");
-        String month = req.getParameter("month");
-
         try {
+            int id = Integer.parseInt(req.getParameter("id"));
             ShiftDao dao = new ShiftDao();
-            dao.deleteByShiftId(shiftID);
+            dao.deleteByShiftId(id);
 
-            String redirect = req.getContextPath() + "/owner/shift/edit";
-            if (year != null && month != null && !year.isBlank() && !month.isBlank()) {
-                redirect += "?year=" + year + "&month=" + month;
-            }
-            resp.sendRedirect(redirect);
+            resp.sendRedirect(req.getContextPath() + "/owner/shift/edit");
 
         } catch (Exception e) {
             throw new ServletException(e);

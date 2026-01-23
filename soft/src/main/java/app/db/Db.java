@@ -6,20 +6,21 @@ import java.sql.SQLException;
 
 public class Db {
 
-    private static final String HOST = "3.221.253.103";
-    private static final String PORT = "3306";
-    private static final String DB   = "shift_db";
-
-    private static final String USER = "cooper";
-    private static final String PASS = "CooperG10!";   // ← Cooperのパス
-
+    // ★自分の環境に合わせて調整（AWSならホストも）
     private static final String URL =
-            "jdbc:mysql://" + HOST + ":" + PORT + "/" + DB +
-            "?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Tokyo" +
-            "&allowPublicKeyRetrieval=true&useSSL=false";
+            "jdbc:mysql://localhost:3306/shift_db?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Tokyo";
+    private static final String USER = "root";
+    private static final String PASS = "CooperG10!"; // ←あなたのメモのやつ
+
+    static {
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException("MySQL Driver not found", e);
+        }
+    }
 
     public static Connection getConnection() throws SQLException {
         return DriverManager.getConnection(URL, USER, PASS);
     }
 }
-
