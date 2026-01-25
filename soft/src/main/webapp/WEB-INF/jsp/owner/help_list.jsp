@@ -16,7 +16,7 @@
 </head>
 <body>
 <div class="container">
-  <div class="h1">シフト自動生成システム</div>
+  <div class="h1">オートシフタ</div>
   <div class="sub">承認待ち</div>
 
   <%@ include file="/WEB-INF/jsp/common/owner_tabs.jspf" %>
