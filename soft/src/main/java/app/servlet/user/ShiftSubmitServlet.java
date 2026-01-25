@@ -13,6 +13,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
+import jp.ac.kochi.tech.ShiftRequest;
+
 @WebServlet("/user/shift/submit/api")
 public class ShiftSubmitServlet extends HttpServlet {
 
@@ -66,17 +68,9 @@ public class ShiftSubmitServlet extends HttpServlet {
         }
         String userId = (String) session.getAttribute("userId");
 
-        // セッション確認
-        HttpSession session = request.getSession(false);
-        if (session == null || session.getAttribute("userId") == null) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("{\"status\":\"unauthorized\"}");
-            return;
-        }
-        String userId = (String) session.getAttribute("userId");
 
-        
-        StringBuilder sb = new StringBuilder()// ===== リクエストボディ(JSON)を読む =====;
+        // ===== リクエストボディ(JSON)を読む =====
+        StringBuilder sb = new StringBuilder();
         try (BufferedReader reader = request.getReader()) {
             String line;
             while ((line = reader.readLine()) != null) {
