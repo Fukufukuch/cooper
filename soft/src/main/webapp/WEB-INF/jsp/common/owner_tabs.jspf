@@ -2,7 +2,34 @@
 <%
   String activeTab = (String) request.getAttribute("activeTab");
   if (activeTab == null) activeTab = "";
+  
+  // セッションからログイン情報を取得（request属性がない場合）
+  String displayUserName = (String) request.getAttribute("userName");
+  if (displayUserName == null) {
+    displayUserName = (String) session.getAttribute("userName");
+  }
+  
+  Object usertypeObj = request.getAttribute("usertype");
+  if (usertypeObj == null) {
+    usertypeObj = session.getAttribute("usertype");
+  }
+  
+  String userRole = "スタッフ";
+  if (usertypeObj != null) {
+    int usertype = Integer.parseInt(usertypeObj.toString());
+    userRole = (usertype == 0) ? "管理者" : "スタッフ";
+  }
 %>
+
+<div class="user-info" style="background-color: #f5f5f5; padding: 12px 16px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center;">
+  <div style="font-size: 14px; color: #666;">
+    <span>ログイン中: </span>
+    <strong style="color: #333;"><%= displayUserName != null ? displayUserName : "ゲスト" %></strong>
+    <span style="margin-left: 12px; padding: 4px 8px; background-color: #e8f0fe; border-radius: 4px; font-size: 12px; color: #1967d2;">
+      <%= userRole %>
+    </span>
+  </div>
+</div>
 
 <div class="navbar">
   <a class="navitem <%= "calendar".equals(activeTab) ? "active" : "" %>"

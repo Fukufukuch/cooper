@@ -35,6 +35,14 @@
         </div>
         <a class="btn" href="${pageContext.request.contextPath}/owner/password">開く</a>
       </div>
+
+      <div class="action-card">
+        <div>
+          <div style="font-weight:800;">ログアウト</div>
+          <div class="note">システムからログアウト</div>
+        </div>
+        <a class="btn" href="${pageContext.request.contextPath}/Logout">実行</a>
+      </div>
     </div>
   </div>
 </div>
