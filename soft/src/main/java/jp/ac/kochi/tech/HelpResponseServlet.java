@@ -6,6 +6,7 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -26,7 +27,12 @@ public class HelpResponseServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
         
-        String userId = "8792312115"; // 本来はセッション
+        HttpSession session = request.getSession(false);
+        if (session == null || session.getAttribute("userID") == null) {
+            response.sendRedirect(request.getContextPath() + "/LoginServlet");
+            return;
+        }
+        String userId = (String) session.getAttribute("userID");
 
         try (Connection con = DBconfig.getConnection()) {
 
@@ -56,24 +62,20 @@ public class HelpResponseServlet extends HttpServlet {
                 confirmedShifts.add(row);
             }
 
-            // 自分の募集履歴（変更なし）
+            // 他のユーザーが依頼した、别身以外の募集情報を取得
             String sqlHelp = """
                 SELECT
-                    h.apply,
-                    h.help_reason,
+                    h.helpID,
+                    h.help_want_userID,
                     h.help_want_day,
-                    t.name AS timeslot_name
-                    FROM help h
-                    JOIN shift s
-                    ON s.workerID = h.help_want_userID
-                    AND s.date = h.help_want_day
-                    AND s.start_minute = (HOUR(h.help_want_time_start) * 60 + MINUTE(h.help_want_time_start))
-                    AND s.end_minute   = (HOUR(h.help_want_time_end)   * 60 + MINUTE(h.help_want_time_end))
-                    JOIN timeslot t
-                    ON s.start_minute = t.start_minute
-                    AND s.end_minute   = t.end_minute
-                    WHERE h.help_want_userID = ?
-                    ORDER BY h.helpID DESC
+                    h.help_want_time_start,
+                    h.help_want_time_end,
+                    h.help_reason,
+                    h.apply
+                FROM help h
+                WHERE h.help_want_userID != ?
+                  AND h.apply = 0
+                ORDER BY h.helpID DESC
             """;
             PreparedStatement psHelp = con.prepareStatement(sqlHelp);
             psHelp.setString(1, userId);
@@ -82,8 +84,10 @@ public class HelpResponseServlet extends HttpServlet {
             List<Map<String, String>> helpList = new ArrayList<>();
             while (rsHelp.next()) {
                 Map<String, String> h = new HashMap<>();
+                h.put("id", rsHelp.getString("helpID"));
+                h.put("userId", rsHelp.getString("help_want_userID"));
                 h.put("date", rsHelp.getString("help_want_day"));
-                h.put("time", rsHelp.getString("timeslot_name"));
+                h.put("time", rsHelp.getString("help_want_time_start") + "〜" + rsHelp.getString("help_want_time_end"));
                 h.put("reason", rsHelp.getString("help_reason"));
                 h.put("status", rsHelp.getString("apply"));
                 helpList.add(h);
@@ -97,7 +101,7 @@ public class HelpResponseServlet extends HttpServlet {
         }
 
         RequestDispatcher dispatcher =
-                request.getRequestDispatcher("/WEB-INF/jsp/user/helpRequest.jsp");
+                request.getRequestDispatcher("/WEB-INF/jsp/user/helpResponse.jsp");
         dispatcher.forward(request, response);
     }
 
@@ -111,9 +115,15 @@ public class HelpResponseServlet extends HttpServlet {
 
         request.setCharacterEncoding("UTF-8");
 
+        HttpSession session = request.getSession(false);
+        if (session == null || session.getAttribute("userID") == null) {
+            response.sendRedirect(request.getContextPath() + "/LoginServlet");
+            return;
+        }
+        String userId = (String) session.getAttribute("userID");
+
         String shiftId = request.getParameter("shift_id");
         String reason = request.getParameter("help_reason");
-        String userId = "8792312115"; // ← 本来は session
 
         try (Connection con = DBconfig.getConnection()) {
 
