@@ -38,13 +38,10 @@
         </div>
 
         <div class="form-group">
-            <label for="startTime">開始時刻</label>
-            <input type="time" id="startTime">
-        </div>
-
-        <div class="form-group">
-            <label for="endTime">終了時刻</label>
-            <input type="time" id="endTime">
+            <label for="timeSlot">シフト区分</label>
+            <select id="timeSlot">
+                <option value="">選択してください</option>
+            </select>
         </div>
 
         <button type="button" class="btn add-btn" onclick="addShift()">
@@ -76,8 +73,6 @@
 
     const dateInput = document.getElementById("shiftDate");
     const allDayCheckbox = document.getElementById("allDay");
-    const startTimeInput = document.getElementById("startTime");
-    const endTimeInput = document.getElementById("endTime");
     const shiftList = document.getElementById("shiftList");
     const countSpan = document.getElementById("count");
 
@@ -94,8 +89,6 @@
     function addShift() {
         const date = dateInput.value;
         const allDay = allDayCheckbox.checked;
-        const startTime = startTimeInput.value;
-        const endTime = endTimeInput.value;
 
         if (!date) {
             alert("日付を選択してください");

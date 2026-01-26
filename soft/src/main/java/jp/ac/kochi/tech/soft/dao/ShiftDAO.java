@@ -21,12 +21,12 @@ public class ShiftDAO {
         String pass = db_info.getDBinfo().get("password");
 
         String sql = """
-            SELECT shift_info_day, shift_timetable
+            SELECT date, shift_timetable
             FROM shift
-            WHERE userID = ?
-              AND YEAR(shift_info_day) = ?
-              AND MONTH(shift_info_day) = ?
-            ORDER BY shift_info_day, shift_timetable_number
+            WHERE workerID = ?
+              AND YEAR(date) = ?
+              AND MONTH(date) = ?
+            ORDER BY date
         """;
 
         try {
@@ -52,7 +52,7 @@ public class ShiftDAO {
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
-                LocalDate day = rs.getDate("shift_info_day").toLocalDate();
+                LocalDate day = rs.getDate("date").toLocalDate();
                 String timetable = rs.getString("shift_timetable");
 
                 int dayOfMonth = day.getDayOfMonth();

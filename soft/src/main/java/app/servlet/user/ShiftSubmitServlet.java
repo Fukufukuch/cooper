@@ -6,8 +6,6 @@ import java.sql.*;
 
 /*import com.google.gson.Gson;*/
 
-import jp.ac.kochi.tech.ShiftRequest;
-
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -70,9 +68,8 @@ public class ShiftSubmitServlet extends HttpServlet {
         }
         String userId = (String) session.getAttribute("userId");
 
-
-        // ===== リクエストボディ(JSON)を読む =====
-        StringBuilder sb = new StringBuilder();
+        
+        StringBuilder sb = new StringBuilder();// ===== リクエストボディ(JSON)を読む =====;
         try (BufferedReader reader = request.getReader()) {
             String line;
             while ((line = reader.readLine()) != null) {
