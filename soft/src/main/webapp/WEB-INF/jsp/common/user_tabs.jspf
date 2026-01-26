@@ -16,7 +16,7 @@
   </a>
 
   <a class="navitem <%= "help".equals(activeTab) ? "active" : "" %>"
-     href="${pageContext.request.contextPath}/owner/help">
+     href="${pageContext.request.contextPath}/HelpRequestServlet">
     <span class="ico">■</span><span>ヘルプ募集</span>
   </a>
 
