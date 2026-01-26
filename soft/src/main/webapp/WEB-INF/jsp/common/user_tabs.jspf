@@ -15,7 +15,7 @@
     <span class="ico">■</span><span>シフト希望入力</span>
   </a>
 
-  <a class="navitem <%= "helpRequest".equals(activeTab) ? "active" : "" %>"
+  <a class="navitem <%= "help".equals(activeTab) ? "active" : "" %>"
      href="${pageContext.request.contextPath}/HelpRequestServlet">
     <span class="ico">■</span><span>ヘルプ募集</span>
   </a>
