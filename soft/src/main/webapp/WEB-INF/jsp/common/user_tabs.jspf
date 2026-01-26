@@ -16,12 +16,12 @@
   </a>
 
   <a class="navitem <%= "help".equals(activeTab) ? "active" : "" %>"
-     href="${pageContext.request.contextPath}/owner/help">
+     href="${pageContext.request.contextPath}/HelpRequestServlet">
     <span class="ico">■</span><span>ヘルプ募集</span>
   </a>
 
-  <a class="navitem <%= "people".equals(activeTab) ? "active" : "" %>"
-     href="${pageContext.request.contextPath}/owner/people">
+  <a class="navitem <%= "helpResponse".equals(activeTab) ? "active" : "" %>"
+     href="${pageContext.request.contextPath}/HelpResponseServlet">
     <span class="ico">■</span><span>ヘルプ応答</span>
   </a>
 
