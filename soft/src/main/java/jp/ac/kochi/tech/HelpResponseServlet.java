@@ -3,71 +3,101 @@ package jp.ac.kochi.tech;
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.*;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.*;
 
-/**
- * 募集中のヘルプに対して他の労働者が応募（応答）処理を行うサーブレット
- */
 @WebServlet("/HelpResponseServlet")
 public class HelpResponseServlet extends HttpServlet {
-	private static final long serialVersionUID = 1L; // Javaのクラスを管理するための識別番号
+    private static final long serialVersionUID = 1L;
 
-	/**
-	 * ヘルプ募集一覧画面を表示する
-	 */
-	@Override
-	protected void doGet(HttpServletRequest request, HttpServletResponse response) //「ヘルプ一覧を見たい」というリクエスト（GET送信）が来たときに動く部分
-			throws ServletException, IOException {
-		
-		// HelpRequestServletから「募集リスト」を読み取ってリストを取得してセット
-		request.setAttribute("helpList", HelpRequestServlet.getHelpList());
-		
-		RequestDispatcher dispatcher = request.getRequestDispatcher("/helpResponse.jsp");
-		dispatcher.forward(request, response);//指定したJSP画面に処理を転送し、画面を表示
-	}
+    /**
+     * 募集中のヘルプ一覧を表示
+     */
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
 
-	/**
-	 * 特定のヘルプ募集に対する応募処理を実行する
-	 */
-	@Override
-	protected void doPost(HttpServletRequest request, HttpServletResponse response)//一覧画面で「応募する」ボタンが押されたとき処理 
-			throws ServletException, IOException {//「このメソッド内でエラーが起きたら、自分では処理せず呼び出し元（サーバー）に丸投げしますよ」 という宣言
+        List<Map<String, String>> helpList = new ArrayList<>();
 
-		// 文字コードとコンテンツタイプの設定
-		response.setContentType("text/html; charset=UTF-8");//文字化け対策
-		request.setCharacterEncoding("UTF-8");//通信の文字コードをUTF-8に設定
+        try (Connection con = DBconfig.getConnection()) {
 
+            String sql = """
+                SELECT helpID, help_want_userID,
+                       help_want_day,
+                       help_want_time_start, help_want_time_end,
+                       help_reason, apply
+                FROM help
+                WHERE apply = 0
+                ORDER BY helpID DESC
+            """;
 
-		// 応募対象のIDを取得
-		String targetId = request.getParameter("help_id");//どの募集に応募したのかを特定するため、画面から送られてきた固有のIDを受け取ってい
-		String helperId = "USER_HELPER"; // 応募者ID（本来はセッションから取得）
-        /**
-         * HttpSession session = request.getSession();サーバーが管理している「その人専用のデータ箱（セッション）」とプログラムが結びつき、ログイン情報などを取り出せるようになりる
-	     * String helperId = (String) session.getAttribute("userId");'userId' というラベルが貼られた荷物を取り出し、応募者IDとして使う
-         * ※注意：これを使うには、事前に LoginServlet などで session.setAttribute("userId", "実際のID") と保存しておく必要があり
-	     */
+            PreparedStatement ps = con.prepareStatement(sql);
+            ResultSet rs = ps.executeQuery();
 
-		// ヘルプリストを取得して該当データを検索・更新==保存されている全募集データのリストを呼び出し
-		List<Map<String, String>> helpList = HelpRequestServlet.getHelpList();
-		
-		for (Map<String, String> help : helpList) {//保存されているデータをチェックしていくループ処理
-			// IDが一致し、かつまだ募集中(status=0)の場合のみ更新
-			if (help.get("id").equals(targetId) && "0".equals(help.get("status"))) {//「IDが一致するデータか？」かつ「まだ誰も応募していない（ステータスが0か？）」をダブルチェック
-				help.put("status", "1"); // 1:承認待ち（応募済み）
-				help.put("helperId", helperId);//「誰が助けてくれるのか（応募者）」の情報をデータに追記
-				break;
-			}
-		}
+            while (rs.next()) {
+                Map<String, String> h = new HashMap<>();
+                h.put("id", rs.getString("helpID"));
+                h.put("userId", rs.getString("help_want_userID"));
+                h.put("date", rs.getString("help_want_day"));
+                h.put("time",
+                        rs.getString("help_want_time_start")
+                        + "〜"
+                        + rs.getString("help_want_time_end"));
+                h.put("reason", rs.getString("help_reason"));
+                h.put("status", rs.getString("apply"));
+                helpList.add(h);
+            }
 
-		// 更新後のリストを表示用JSPへ渡す
-		request.setAttribute("helpList", helpList);
-		RequestDispatcher dispatcher = request.getRequestDispatcher("/helpResponse.jsp");
-		dispatcher.forward(request, response);
-	}
+        } catch (Exception e) {
+            throw new ServletException(e);
+        }
+
+        request.setAttribute("helpList", helpList);
+        RequestDispatcher dispatcher =
+                request.getRequestDispatcher("/WEB-INF/jsp/user/helpResponse.jsp");
+        dispatcher.forward(request, response);
+    }
+
+    /**
+     * ヘルプに応募する処理
+     */
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+
+        request.setCharacterEncoding("UTF-8");
+
+        int helpId = Integer.parseInt(request.getParameter("help_id"));
+        String helperId = "USER_HELPER"; // 本来は session
+
+        try (Connection con = DBconfig.getConnection()) {
+
+            String sql = """
+                UPDATE help
+                SET helper_userID = ?, apply = 1
+                WHERE helpID = ? AND apply = 0
+            """;
+
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setString(1, helperId);
+            ps.setInt(2, helpId);
+            ps.executeUpdate();
+
+        } catch (Exception e) {
+            throw new ServletException(e);
+        }
+
+        response.sendRedirect(request.getContextPath() + "/HelpResponseServlet");
+    }
 }
+
 
 /**処理の大まかな流れ
  * 1 helpResponse.jsp を表示

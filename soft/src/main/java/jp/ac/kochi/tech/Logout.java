@@ -23,6 +23,11 @@ public class Logout extends HttpServlet {
 		response.setContentType("text/html; charset=UTF-8");
 		request.setCharacterEncoding("UTF-8");
 
+		// キャッシュを無効にしてブラウザの戻るボタンでページにアクセスできないようにする
+		response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+		response.setHeader("Pragma", "no-cache");
+		response.setHeader("Expires", "0");
+
 		// セッションオブジェクトを作成
 		// 引数(false) → セッションがなければnullを返す
 		HttpSession admin_session = request.getSession(false);

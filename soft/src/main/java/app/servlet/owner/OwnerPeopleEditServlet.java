@@ -18,6 +18,15 @@ public class OwnerPeopleEditServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
+        
+        jakarta.servlet.http.HttpSession session = req.getSession(false);
+        if (session == null || session.getAttribute("userID") == null) {
+            resp.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+            resp.setHeader("Pragma", "no-cache");
+            resp.setHeader("Expires", "0");
+            resp.sendRedirect(req.getContextPath() + "/login.jsp");
+            return;
+        }
 
         String userID = req.getParameter("userID");
 
@@ -34,12 +43,14 @@ public class OwnerPeopleEditServlet extends HttpServlet {
 
             if (u == null) {
                 req.setAttribute("error", "対象ユーザーが見つかりません。");
+                req.setAttribute("activeTab", "people");
                 req.getRequestDispatcher("/WEB-INF/jsp/owner/people_edit.jsp")
                    .forward(req, resp);
                 return;
             }
 
             req.setAttribute("user", u);
+            req.setAttribute("activeTab", "people");
             req.getRequestDispatcher("/WEB-INF/jsp/owner/people_edit.jsp")
                .forward(req, resp);
 
@@ -51,6 +62,15 @@ public class OwnerPeopleEditServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
+        
+        jakarta.servlet.http.HttpSession session = req.getSession(false);
+        if (session == null || session.getAttribute("userID") == null) {
+            resp.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+            resp.setHeader("Pragma", "no-cache");
+            resp.setHeader("Expires", "0");
+            resp.sendRedirect(req.getContextPath() + "/login.jsp");
+            return;
+        }
 
         req.setCharacterEncoding("UTF-8");
 
@@ -86,6 +106,7 @@ public class OwnerPeopleEditServlet extends HttpServlet {
             back.setWorkPlace(workPlace);
 
             req.setAttribute("user", back);
+            req.setAttribute("activeTab", "people");
             req.getRequestDispatcher("/WEB-INF/jsp/owner/people_edit.jsp")
                .forward(req, resp);
             return;
@@ -99,6 +120,7 @@ public class OwnerPeopleEditServlet extends HttpServlet {
             dob = Date.valueOf(dobStr);
         } catch (Exception e) {
             req.setAttribute("error", "生年月日の形式が不正です。");
+            req.setAttribute("activeTab", "people");
             req.getRequestDispatcher("/WEB-INF/jsp/owner/people_edit.jsp")
                .forward(req, resp);
             return;

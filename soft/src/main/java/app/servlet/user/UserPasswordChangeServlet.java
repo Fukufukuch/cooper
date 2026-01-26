@@ -1,4 +1,4 @@
-package app.servlet.owner;
+package app.servlet.user;
 
 import app.dao.UserDao;
 
@@ -7,44 +7,36 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 
-@WebServlet("/owner/password")
-public class OwnerPasswordChangeServlet extends HttpServlet {
+@WebServlet("/user/password")
+public class UserPasswordChangeServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
-        
-        HttpSession session = req.getSession(false);
+        var session = req.getSession(false);
         if (session == null || session.getAttribute("userID") == null) {
-            resp.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-            resp.setHeader("Pragma", "no-cache");
-            resp.setHeader("Expires", "0");
-            resp.sendRedirect(req.getContextPath() + "/login.jsp");
+            resp.sendRedirect(req.getContextPath() + "/LoginServlet");
             return;
         }
 
         req.setAttribute("activeTab", "setting");
-        req.getRequestDispatcher("/WEB-INF/jsp/owner/password_change.jsp").forward(req, resp);
+        req.getRequestDispatcher("/WEB-INF/jsp/user/passwordChange.jsp").forward(req, resp);
     }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
-        
-        HttpSession session = req.getSession(false);
-        if (session == null || session.getAttribute("userID") == null) {
-            resp.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-            resp.setHeader("Pragma", "no-cache");
-            resp.setHeader("Expires", "0");
-            resp.sendRedirect(req.getContextPath() + "/login.jsp");
-            return;
-        }
 
         req.setCharacterEncoding("UTF-8");
+
+        var session = req.getSession(false);
+        if (session == null || session.getAttribute("userID") == null) {
+            resp.sendRedirect(req.getContextPath() + "/LoginServlet");
+            return;
+        }
 
         String userID = req.getParameter("userID");
         String oldPassword = req.getParameter("oldPassword");
@@ -57,14 +49,14 @@ public class OwnerPasswordChangeServlet extends HttpServlet {
             if (!ok) {
                 req.setAttribute("error", "ユーザーIDか現在のパスワードが違います。");
                 req.setAttribute("activeTab", "setting");
-                req.getRequestDispatcher("/WEB-INF/jsp/owner/password_change.jsp").forward(req, resp);
+                req.getRequestDispatcher("/WEB-INF/jsp/user/passwordChange.jsp").forward(req, resp);
                 return;
             }
 
             // ✅ 完了画面へ
             req.setAttribute("userID", userID);
             req.setAttribute("activeTab", "setting");
-            req.getRequestDispatcher("/WEB-INF/jsp/owner/password_change_done.jsp")
+            req.getRequestDispatcher("/WEB-INF/jsp/user/passwordChangeDone.jsp")
                .forward(req, resp);
 
         } catch (Exception e) {
@@ -72,3 +64,4 @@ public class OwnerPasswordChangeServlet extends HttpServlet {
         }
     }
 }
+

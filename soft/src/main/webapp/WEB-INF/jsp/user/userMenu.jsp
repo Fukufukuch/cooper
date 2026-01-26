@@ -1,0 +1,45 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%
+    request.setAttribute("activeTab", "setting");
+%>
+
+<!DOCTYPE html>
+<html lang="ja">
+    <head>
+        <meta charset="UTF-8">
+        <title>設定</title>
+        <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/app.css">
+    </head>
+
+    <body>
+        <div class="container">
+            <div class="h1">オートシフタ</div>
+            <div class="sub">設定</div>
+
+            <%@ include file="/WEB-INF/jsp/common/user_tabs.jspf" %>
+
+            <div class="card" style="margin-top:14px;">
+                <div class="section-title">設定メニュー</div>
+                <p class="section-desc">各機能を選んでください。</p>
+
+                <div class="form" style="margin-top:14px;">
+                    <div class="action-card">
+                        <div>
+                            <div style="font-weight:800;">パスワード変更</div>
+                            <div class="note">パスワードを変更</div>
+                        </div>
+                        <a class="btn" href="${pageContext.request.contextPath}/user/password">開く</a>
+                    </div>
+
+                    <div class="action-card">
+                        <div>
+                            <div style="font-weight:800;">ログアウト</div>
+                            <div class="note">システムからログアウト</div>
+                        </div>
+                        <a class="btn" href="${pageContext.request.contextPath}/Logout">実行</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
