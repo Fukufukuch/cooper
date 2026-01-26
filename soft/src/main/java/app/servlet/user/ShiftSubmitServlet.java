@@ -6,8 +6,6 @@ import java.sql.*;
 
 /*import com.google.gson.Gson;*/
 
-import jp.ac.kochi.tech.ShiftRequest;
-
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
