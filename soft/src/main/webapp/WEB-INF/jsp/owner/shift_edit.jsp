@@ -1,12 +1,36 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="java.util.*" %>
+<%@ page import="java.time.*" %>
 <%@ page import="app.dao.ShiftDao.ShiftRow" %>
+
+
 
 <%
   request.setAttribute("activeTab", "shift");
   Integer year = (Integer)request.getAttribute("year");
   Integer month = (Integer)request.getAttribute("month");
   List<ShiftRow> rows = (List<ShiftRow>)request.getAttribute("rows");
+  
+  // シフト情報をマップに整理（日付 + ユーザーID → シフト情報）
+  LocalDate startDate = LocalDate.of(year, month, 1);
+  LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
+  
+  Map<String, Map<String, List<ShiftRow>>> shiftMap = new TreeMap<>();
+  Map<String, String> userIdToName = new LinkedHashMap<>();
+  Set<String> userSet = new TreeSet<>();
+  
+  if (rows != null && !rows.isEmpty()) {
+    for (ShiftRow r : rows) {
+      String dateKey = r.shiftInfoDay.toString();
+      String userKey = r.userID;
+      
+      shiftMap.computeIfAbsent(dateKey, k -> new TreeMap<>())
+              .computeIfAbsent(userKey, k -> new ArrayList<>())
+              .add(r);
+      userSet.add(userKey);
+      userIdToName.put(userKey, r.username);
+    }
+  }
 %>
 
 <!DOCTYPE html>
@@ -15,6 +39,82 @@
   <meta charset="UTF-8">
   <title>シフト編集</title>
   <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/app.css">
+  <style>
+    .shift-table-wrapper {
+      overflow-x: auto;
+      margin: 0 -6px;
+      padding: 0 6px;
+    }
+    .shift-calendar {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+      min-width: 600px;
+    }
+    .shift-calendar thead {
+      background-color: #f0f0f0;
+      position: sticky;
+      top: 0;
+    }
+    .shift-calendar th {
+      border: 1px solid #ccc;
+      padding: 6px 4px;
+      font-weight: bold;
+      text-align: center;
+      white-space: nowrap;
+    }
+    .shift-calendar td {
+      border: 1px solid #ccc;
+      padding: 4px;
+      vertical-align: top;
+      height: 80px;
+      overflow-y: auto;
+      font-size: 10px;
+    }
+    .shift-calendar tbody tr:nth-child(odd) {
+      background-color: #fafafa;
+    }
+    .shift-user-cell {
+      font-weight: bold;
+      color: #333;
+      text-align: center;
+      white-space: nowrap;
+      width: 80px;
+      min-width: 80px;
+    }
+    .shift-date-header {
+      font-weight: bold;
+      color: #333;
+      min-width: 50px;
+    }
+    .shift-item {
+      background-color: #e3f2fd;
+      border-left: 3px solid #1976d2;
+      padding: 3px;
+      margin-bottom: 2px;
+      border-radius: 2px;
+      font-size: 9px;
+      word-wrap: break-word;
+      word-break: break-all;
+    }
+    .shift-user {
+      font-size: 9px;
+      color: #666;
+      margin-bottom: 1px;
+    }
+    .shift-time {
+      font-size: 9px;
+      color: #1976d2;
+      font-weight: bold;
+      margin-bottom: 1px;
+    }
+    .shift-delete-btn {
+      font-size: 8px;
+      padding: 1px 3px;
+      margin-top: 1px;
+      width: 100%;
+    }
+  </style>
 </head>
 <body>
 
@@ -25,46 +125,67 @@
 
   <%@ include file="/WEB-INF/jsp/common/owner_tabs.jspf" %>
 
-  <!-- ===== 一覧 ===== -->
+  <!-- ===== 一覧（表形式） ===== -->
   <div class="card" style="margin-top:14px;">
     <div class="section-title">今月のシフト（<%= year %>/<%= month %>）</div>
-    <p class="section-desc">shift テーブルから表示（削除できます）</p>
+    <p class="section-desc">エクセル形式で表示（削除できます）</p>
 
     <% if (rows == null || rows.isEmpty()) { %>
       <div class="note">この月のシフトはありません。</div>
     <% } else { %>
 
-      <table class="table">
-        <thead>
-        <tr>
-          <th>ID</th>
-          <th>ユーザーID</th>
-          <th>氏名</th>
-          <th>日付</th>
-          <th>時間帯</th>
-          <th style="width:120px;">操作</th>
-        </tr>
-        </thead>
-        <tbody>
-        <% for (ShiftRow r : rows) { %>
-          <tr>
-            <td><%= r.shiftID %></td>
-            <td><%= r.userID %></td>
-            <td><%= r.username %></td>
-            <td><%= r.shiftInfoDay %></td>
-            <td><%= r.shiftTimetable %></td>
-            <td>
-              <form method="post" action="<%= request.getContextPath() %>/owner/shift/delete" style="display:inline;">
-                <input type="hidden" name="shiftID" value="<%= r.shiftID %>">
-                <input type="hidden" name="year" value="<%= year %>">
-                <input type="hidden" name="month" value="<%= month %>">
-                <button class="btn danger" type="submit">削除</button>
-              </form>
-            </td>
-          </tr>
-        <% } %>
-        </tbody>
-      </table>
+      <div class="shift-table-wrapper">
+        <table class="shift-calendar">
+          <thead>
+            <tr>
+              <th style="min-width: 80px;">ユーザー名</th>
+              <% 
+                for (LocalDate d = startDate; !d.isAfter(endDate); d = d.plusDays(1)) {
+                  int dayOfMonth = d.getDayOfMonth();
+                  String dayOfWeekStr = d.getDayOfWeek().toString().substring(0, 3);
+              %>
+                <th style="min-width: 60px;">
+                  <div class="shift-date-header"><%= dayOfMonth %></div>
+                  <div style="font-size: 8px; color: #999;">(<%= dayOfWeekStr %>)</div>
+                </th>
+              <% } %>
+            </tr>
+          </thead>
+          <tbody>
+            <% for (String userId : userSet) { %>
+              <tr>
+                <td class="shift-user-cell"><%= userIdToName.get(userId) %></td>
+                <% 
+                  for (LocalDate d = startDate; !d.isAfter(endDate); d = d.plusDays(1)) {
+                    String dateKey = d.toString();
+                %>
+                  <td>
+                    <% 
+                      Map<String, List<ShiftRow>> userShifts = shiftMap.get(dateKey);
+                      if (userShifts != null && userShifts.containsKey(userId)) {
+                        for (ShiftRow r : userShifts.get(userId)) {
+                    %>
+                      <div class="shift-item">
+                        <div class="shift-user"><%= r.username %></div>
+                        <div class="shift-time"><%= r.shiftTimetable %></div>
+                        <form method="post" action="<%= request.getContextPath() %>/owner/shift/delete" style="margin-top: 1px;">
+                          <input type="hidden" name="shiftID" value="<%= r.shiftID %>">
+                          <input type="hidden" name="year" value="<%= year %>">
+                          <input type="hidden" name="month" value="<%= month %>">
+                          <button class="btn danger shift-delete-btn" type="submit">削除</button>
+                        </form>
+                      </div>
+                    <% 
+                        }
+                      }
+                    %>
+                  </td>
+                <% } %>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
 
     <% } %>
   </div>
