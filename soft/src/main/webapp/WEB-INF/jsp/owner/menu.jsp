@@ -11,7 +11,7 @@
 </head>
 <body>
 <div class="container">
-	<div class="page-title">シフト自動生成システム</div>
+	<div class="page-title">オートシフタ</div>
 	<div class="sub">管理者メニュー</div>
 
 	<jsp:include page="/WEB-INF/jsp/common/owner_tabs.jspf" />

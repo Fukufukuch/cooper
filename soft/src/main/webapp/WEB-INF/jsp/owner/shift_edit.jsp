@@ -1,117 +1,111 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ page import="java.util.*" %>
+<%@ page import="app.dao.ShiftDao.ShiftRow" %>
+
+<%
+  request.setAttribute("activeTab", "shift");
+  Integer year = (Integer)request.getAttribute("year");
+  Integer month = (Integer)request.getAttribute("month");
+  List<ShiftRow> rows = (List<ShiftRow>)request.getAttribute("rows");
+%>
 
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>シフト修正・公開</title>
-  <style>
-    body { font-family: sans-serif; background: #f6f6f6; }
-    .wrap { max-width: 980px; margin: 30px auto; padding: 0 12px; }
-    .card { background: #fff; padding: 18px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,.06); margin-bottom: 16px; }
-    .title { font-size: 20px; font-weight: 700; margin-bottom: 10px; }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .row { display: flex; flex-direction: column; gap: 6px; }
-    .input, select { padding: 10px; border: 1px solid #ddd; border-radius: 8px; }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { border-bottom: 1px solid #eee; padding: 10px; text-align: left; }
-    th { background: #fafafa; }
-    .btn { padding: 10px 14px; border: none; border-radius: 8px; cursor: pointer; }
-    .btn-primary { background: #2563eb; color: #fff; }
-    .btn-danger { background: #ef4444; color: #fff; }
-    .muted { color: #666; font-size: 12px; }
-  </style>
+  <title>シフト編集</title>
+  <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/app.css">
 </head>
-
 <body>
-<div class="wrap">
 
-  <div class="card">
-    <div class="title">シフト追加</div>
+<div class="container">
 
-    <form action="${pageContext.request.contextPath}/owner/shift/add" method="post">
-      <div class="grid">
-        <div class="row">
-          <label>日付</label>
-          <input class="input" type="date" name="date" required>
-        </div>
+  <div class="h1">オートシフタ</div>
+  <div class="sub">シフト編集</div>
 
-        <div class="row">
-          <label>ユーザーID（workerID）</label>
-          <input class="input" type="text" name="userID" required>
-          <div class="muted">※ users.userID と一致するID</div>
-        </div>
+  <%@ include file="/WEB-INF/jsp/common/owner_tabs.jspf" %>
 
-        <div class="row">
-          <label>ポジションID</label>
-          <input class="input" type="number" name="positionID" required>
-        </div>
+  <!-- ===== 一覧 ===== -->
+  <div class="card" style="margin-top:14px;">
+    <div class="section-title">今月のシフト（<%= year %>/<%= month %>）</div>
+    <p class="section-desc">shift テーブルから表示（削除できます）</p>
 
-        <div class="row">
-          <label>時間帯（早番/中番/遅番/午前/午後 など）</label>
-          <select class="input" name="timeslotID" required>
-            <c:forEach var="t" items="${timeslotList}">
-              <option value="${t.timeslotID}">
-                ${t.timeslotID}：${t.name}（${t.start}〜${t.end}）
-              </option>
-            </c:forEach>
-          </select>
-        </div>
-      </div>
+    <% if (rows == null || rows.isEmpty()) { %>
+      <div class="note">この月のシフトはありません。</div>
+    <% } else { %>
 
-      <div style="margin-top:12px;">
-        <button class="btn btn-primary" type="submit">追加</button>
-        <a class="btn" href="${pageContext.request.contextPath}/owner/timeslot/edit" style="text-decoration:none; display:inline-block; margin-left:8px; background:#111827; color:#fff;">時間帯の設定</a>
-      </div>
-    </form>
+      <table class="table">
+        <thead>
+        <tr>
+          <th>ID</th>
+          <th>ユーザーID</th>
+          <th>氏名</th>
+          <th>日付</th>
+          <th>時間帯</th>
+          <th style="width:120px;">操作</th>
+        </tr>
+        </thead>
+        <tbody>
+        <% for (ShiftRow r : rows) { %>
+          <tr>
+            <td><%= r.shiftID %></td>
+            <td><%= r.userID %></td>
+            <td><%= r.username %></td>
+            <td><%= r.shiftInfoDay %></td>
+            <td><%= r.shiftTimetable %></td>
+            <td>
+              <form method="post" action="<%= request.getContextPath() %>/owner/shift/delete" style="display:inline;">
+                <input type="hidden" name="shiftID" value="<%= r.shiftID %>">
+                <input type="hidden" name="year" value="<%= year %>">
+                <input type="hidden" name="month" value="<%= month %>">
+                <button class="btn danger" type="submit">削除</button>
+              </form>
+            </td>
+          </tr>
+        <% } %>
+        </tbody>
+      </table>
+
+    <% } %>
   </div>
 
-  <div class="card">
-    <div class="title">シフト一覧（直近）</div>
+  <!-- ===== 追加 ===== -->
+  <div class="card" style="margin-top:14px;">
+    <div class="section-title">シフト追加</div>
+    <p class="section-desc">（画面互換のため、時間帯は「早番/中番/遅番」の入力でOK）</p>
 
-    <table>
-      <thead>
-      <tr>
-        <th>ID</th>
-        <th>日付</th>
-        <th>workerID</th>
-        <th>名前</th>
-        <th>positionID</th>
-        <th>時間帯</th>
-        <th>削除</th>
-      </tr>
-      </thead>
+    <form method="post" action="<%= request.getContextPath() %>/owner/shift/add">
+      <input type="hidden" name="year" value="<%= year %>">
+      <input type="hidden" name="month" value="<%= month %>">
 
-      <tbody>
-      <c:forEach var="s" items="${shiftList}">
-        <tr>
-          <td>${s.id}</td>
-          <td>${s.date}</td>
-          <td>${s.workerID}</td>
-          <td>${s.username}</td>
-          <td>${s.positionID}</td>
-          <td>
-            <c:choose>
-              <c:when test="${not empty s.timeslotName}">
-                ${s.timeslotName}（${s.startTime}〜${s.endTime}）
-              </c:when>
-              <c:otherwise>
-                （時間帯未設定）
-              </c:otherwise>
-            </c:choose>
-          </td>
-          <td>
-            <form action="${pageContext.request.contextPath}/owner/shift/delete" method="post" style="margin:0;">
-              <input type="hidden" name="id" value="${s.id}">
-              <button class="btn btn-danger" type="submit">削除</button>
-            </form>
-          </td>
-        </tr>
-      </c:forEach>
-      </tbody>
-    </table>
+      <div class="form-row">
+        <label>ユーザーID</label>
+        <input class="input" type="text" name="userID" maxlength="10" required>
+      </div>
 
+      <div class="form-row">
+        <label>日付</label>
+        <input class="input" type="date" name="day" required>
+      </div>
+
+      <div class="form-row">
+        <label>時間帯</label>
+        <select class="input" name="timetable">
+          <option value="早番">早番</option>
+          <option value="中番">中番</option>
+          <option value="遅番">遅番</option>
+        </select>
+      </div>
+
+      <div class="form-row">
+        <label>時間帯番号（任意）</label>
+        <input class="input" type="number" name="timetableNumber" min="1" max="3" placeholder="1=早番,2=中番,3=遅番">
+      </div>
+
+      <div class="form-actions">
+        <button class="btn" type="submit">追加</button>
+      </div>
+    </form>
   </div>
 
 </div>

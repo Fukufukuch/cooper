@@ -16,6 +16,15 @@ public class OwnerShiftDeleteServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
+        
+        jakarta.servlet.http.HttpSession session = req.getSession(false);
+        if (session == null || session.getAttribute("userID") == null) {
+            resp.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+            resp.setHeader("Pragma", "no-cache");
+            resp.setHeader("Expires", "0");
+            resp.sendRedirect(req.getContextPath() + "/login.jsp");
+            return;
+        }
 
         try {
             int id = Integer.parseInt(req.getParameter("id"));
