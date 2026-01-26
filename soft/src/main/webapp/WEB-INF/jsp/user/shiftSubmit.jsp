@@ -73,38 +73,52 @@
 
     const dateInput = document.getElementById("shiftDate");
     const allDayCheckbox = document.getElementById("allDay");
+    const timeSlotSelect = document.getElementById("timeSlot");
     const shiftList = document.getElementById("shiftList");
     const countSpan = document.getElementById("count");
 
+    // ページロード時にtimeslotをロード
+    window.addEventListener("load", loadTimeslots);
+
+    function loadTimeslots() {
+        fetch("<%= request.getContextPath() %>/user/shift/submit/api")
+            .then(res => res.json())
+            .then(timeslots => {
+                timeslots.forEach(timeslot => {
+                    const option = document.createElement("option");
+                    option.value = timeslot.id;
+                    option.textContent = timeslot.name;
+                    timeSlotSelect.appendChild(option);
+                });
+            })
+            .catch(err => console.error("timeslot load error:", err));
+    }
+
     allDayCheckbox.addEventListener("change", () => {
         const disabled = allDayCheckbox.checked;
-        startTimeInput.disabled = disabled;
-        endTimeInput.disabled = disabled;
-        if (disabled) {
-            startTimeInput.value = "";
-            endTimeInput.value = "";
-        }
+        // startTimeInput.disabled = disabled; // 存在しないので削除
+        // endTimeInput.disabled = disabled;
     });
 
     function addShift() {
         const date = dateInput.value;
         const allDay = allDayCheckbox.checked;
+        const timeSlotId = timeSlotSelect.value;
 
         if (!date) {
             alert("日付を選択してください");
             return;
         }
 
-        if (!allDay && (!startTime || !endTime)) {
-            alert("開始・終了時刻を入力してください");
+        if (!timeSlotId) {
+            alert("シフト区分を選択してください");
             return;
         }
 
         shiftRequests.push({
-            date,
-            startTime: allDay ? null : startTime,
-            endTime: allDay ? null : endTime,
-            allDay
+            timeSlotId: parseInt(timeSlotId),
+            helpDay: date,
+            reason: "希望" // 理由は固定または入力追加
         });
 
         clearForm();
@@ -114,10 +128,7 @@
     function clearForm() {
         dateInput.value = "";
         allDayCheckbox.checked = false;
-        startTimeInput.disabled = false;
-        endTimeInput.disabled = false;
-        startTimeInput.value = "";
-        endTimeInput.value = "";
+        timeSlotSelect.value = "";
     }
 
     function renderShiftList() {
@@ -133,14 +144,10 @@
             const card = document.createElement("div");
             card.className = "shift-card";
 
-            const timeText = shift.allDay
-                ? "終日勤務可能"
-                : shift.startTime + " 〜 " + shift.endTime;
-
             card.innerHTML =
                 '<div class="shift-info">' +
-                '<div class="shift-date">📅 ' + shift.date + '</div>' +
-                '<div class="shift-time">⏰ ' + timeText + '</div>' +
+                '<div class="shift-date">📅 ' + shift.helpDay + '</div>' +
+                '<div class="shift-timeslot">⏰ ' + shift.timeSlotId + '</div>' + // nameを表示するには追加
                 '</div>' +
                 '<button class="delete-btn" onclick="removeShift(' + index + ')">🗑</button>';
 
@@ -156,24 +163,27 @@
     }
 
     function submitShifts() {
-      fetch("<%= request.getContextPath() %>/user/shift/submit/api", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(shiftRequests)
-      })
-      .then(res => {
-        if (!res.ok) throw new Error("HTTP error " + res.status);
-        return res.json();
-      })
-      .then(data => {
-        alert("提出完了！");
-      })
-      .catch(err => {
-        console.error(err);
-        alert("送信に失敗しました");
-      });
+        fetch("<%= request.getContextPath() %>/user/shift/submit/api", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(shiftRequests)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === "success") {
+                alert("提出完了！");
+                shiftRequests = [];
+                renderShiftList();
+            } else {
+                alert("エラー: " + data.status);
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert("送信に失敗しました");
+        });
     }
 </script>
 

@@ -77,6 +77,23 @@ public class HelpRequestServlet extends HttpServlet {
             request.setAttribute("confirmedShifts", confirmedShifts);
             request.setAttribute("helpList", helpList);
 
+            // 自分のシフトで使用されているtimeslotのname一覧（重複除去）
+            String sqlTypes = """
+                SELECT DISTINCT t.name
+                FROM shift s
+                JOIN timeslot t ON s.start_minute = t.start_minute AND s.end_minute = t.end_minute
+                WHERE s.workerID = ?
+                ORDER BY t.start_minute
+            """;
+            PreparedStatement psTypes = con.prepareStatement(sqlTypes);
+            psTypes.setString(1, userId);
+            ResultSet rsTypes = psTypes.executeQuery();
+            List<String> shiftTypes = new ArrayList<>();
+            while (rsTypes.next()) {
+                shiftTypes.add(rsTypes.getString("name"));
+            }
+            request.setAttribute("shiftTypes", shiftTypes);
+
         } catch (Exception e) {
             throw new ServletException(e);
         }
@@ -93,7 +110,7 @@ public class HelpRequestServlet extends HttpServlet {
         request.setCharacterEncoding("UTF-8");
 
         HttpSession session = request.getSession(false);
-        String userId = (String) session.getAttribute("userID");
+        String userId = (String) session.getAttribute("userId");
 
         int shiftId = Integer.parseInt(request.getParameter("shift_id"));
         String reason = request.getParameter("help_reason");

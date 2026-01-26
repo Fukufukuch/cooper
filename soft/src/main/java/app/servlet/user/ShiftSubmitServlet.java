@@ -3,6 +3,10 @@ package app.servlet.user;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 /*import com.google.gson.Gson;*/
 
@@ -135,4 +139,33 @@ public class ShiftSubmitServlet extends HttpServlet {
             response.getWriter().write("{\"status\":\"error\"}");
         }
     }
+
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+
+        response.setContentType("application/json; charset=UTF-8");
+
+        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD)) {
+            String sql = "SELECT id, name FROM timeslot ORDER BY start_minute";
+            try (PreparedStatement ps = conn.prepareStatement(sql);
+                 ResultSet rs = ps.executeQuery()) {
+
+                StringBuilder json = new StringBuilder("[");
+                boolean first = true;
+                while (rs.next()) {
+                    if (!first) json.append(",");
+                    json.append("{\"id\":").append(rs.getInt("id")).append(",\"name\":\"").append(rs.getString("name")).append("\"}");
+                    first = false;
+                }
+                json.append("]");
+
+                response.getWriter().write(json.toString());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        }
+    }
+
 }
