@@ -14,12 +14,14 @@ public class UserMenuServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
+        // セッション確認（未ログインならログイン画面へ）
+        var session = req.getSession(false);
+        if (session == null || session.getAttribute("userID") == null) {
+            resp.sendRedirect(req.getContextPath() + "/LoginServlet");
+            return;
+        }
 
-        // タブ制御用（必要なら）
         req.setAttribute("activeTab", "setting");
-
-        // userMenu.jsp へフォワード
-        req.getRequestDispatcher("/WEB-INF/jsp/user/userMenu.jsp")
-           .forward(req, resp);
+        req.getRequestDispatcher("/WEB-INF/jsp/user/userMenu.jsp").forward(req, resp);
     }
 }

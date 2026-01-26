@@ -6,6 +6,8 @@ import java.sql.*;
 
 /*import com.google.gson.Gson;*/
 
+import jp.ac.kochi.tech.ShiftRequest;
+
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -66,17 +68,9 @@ public class ShiftSubmitServlet extends HttpServlet {
         }
         String userId = (String) session.getAttribute("userId");
 
-        // セッション確認
-        HttpSession session = request.getSession(false);
-        if (session == null || session.getAttribute("userId") == null) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("{\"status\":\"unauthorized\"}");
-            return;
-        }
-        String userId = (String) session.getAttribute("userId");
-
         
-        StringBuilder sb = new StringBuilder()// ===== リクエストボディ(JSON)を読む =====;
+        // ===== リクエストボディ(JSON)を読む =====
+        StringBuilder sb = new StringBuilder();
         try (BufferedReader reader = request.getReader()) {
             String line;
             while ((line = reader.readLine()) != null) {
@@ -117,7 +111,7 @@ public class ShiftSubmitServlet extends HttpServlet {
                 }
 
                 startMinute = rs.getInt("start_minute");
-                endMinute = rs.getInt("endminute");
+                endMinute = rs.getInt("end_minute");
             }
 
             // 分 → Time に変換
@@ -133,7 +127,7 @@ public class ShiftSubmitServlet extends HttpServlet {
                 ps.setString(5, req.getReason());
 
                 ps.executeUpdate();
-        }
+            }
             response.getWriter().write("{\"status\":\"success\"}");
 
         } catch (Exception e) {
