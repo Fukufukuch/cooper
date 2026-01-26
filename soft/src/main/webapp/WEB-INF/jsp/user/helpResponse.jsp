@@ -1,19 +1,21 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="java.util.*" %>
+<%
+request.setAttribute("activeTab", "helpResponse");
+%>
 <!DOCTYPE html>
 <html lang="ja">
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>ヘルプ一覧 | オートシフタ</title>
+	<title>ヘルプ応答 | オートシフタ</title>
+	<link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/app.css">
 	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 	<style>
-		/* shift.jsp のスタイルを反映 */
 		body { 
 			background-color: #f4f7f6; 
 			font-family: sans-serif;
 		}
-		.navbar { background-color: #007bff; }
 		.help-card { 
 			border: 1px solid #ddd; 
 			border-radius: 8px; 
@@ -29,22 +31,16 @@
 			font-size: 0.9rem;
 			border-left: 3px solid #007bff;
 		}
-		.btn-success { background-color: #28a745; border: none; } /* shift.jsp の追加ボタン色 */
+		.btn-success { background-color: #28a745; border: none; }
 	</style>
 </head>
 <body>
-	<nav class="navbar navbar-expand-lg navbar-dark mb-4 shadow-sm">
-		<div class="container">
-			<a class="navbar-brand fw-bold" href="#">📅 オートシフタ</a>
-			<div class="navbar-nav">
-				<a class="nav-link" href="shift.jsp">シフト希望提出</a>
-				<a class="nav-link" href="HelpRequestServlet">ヘルプ募集</a>
-				<a class="nav-link active" href="HelpResponseServlet">ヘルプ一覧</a>
-			</div>
-		</div>
-	</nav>
 
-	<div class="container">
+<div class="container">
+	<div class="h1">オートシフタ</div>
+	<div class="sub">ヘルプ応答</div>
+
+	<%@ include file="/WEB-INF/jsp/common/user_tabs.jspf" %>
 		<div class="row mb-3 align-items-center">
 			<div class="col">
 				<h4 class="fw-bold mb-0">🔍 募集中シフト一覧</h4>

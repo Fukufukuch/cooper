@@ -16,6 +16,11 @@ public class UserPasswordChangeServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
+        var session = req.getSession(false);
+        if (session == null || session.getAttribute("userID") == null) {
+            resp.sendRedirect(req.getContextPath() + "/LoginServlet");
+            return;
+        }
 
         req.setAttribute("activeTab", "setting");
         req.getRequestDispatcher("/WEB-INF/jsp/user/passwordChange.jsp").forward(req, resp);
@@ -26,6 +31,12 @@ public class UserPasswordChangeServlet extends HttpServlet {
             throws ServletException, IOException {
 
         req.setCharacterEncoding("UTF-8");
+
+        var session = req.getSession(false);
+        if (session == null || session.getAttribute("userID") == null) {
+            resp.sendRedirect(req.getContextPath() + "/LoginServlet");
+            return;
+        }
 
         String userID = req.getParameter("userID");
         String oldPassword = req.getParameter("oldPassword");
