@@ -93,6 +93,13 @@ public class HelpResponseServlet extends HttpServlet {
         request.setCharacterEncoding("UTF-8");
 
         HttpSession session = request.getSession(false);
+        if (session == null || session.getAttribute("userID") == null) {
+            response.sendRedirect(request.getContextPath() + "/LoginServlet");
+            return;
+        }
+        String userId = (String) session.getAttribute("userID");
+
+        HttpSession session = request.getSession(false);
         String userId = (String) session.getAttribute("userID");
 
         String helpId = request.getParameter("help_id");
