@@ -17,23 +17,20 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
+import jp.ac.kochi.tech.DBconfig;
+
 import jp.ac.kochi.tech.ShiftRequest;
 
 @WebServlet("/user/shift/submit/api")
 public class ShiftSubmitServlet extends HttpServlet {
-
-    private static final String URL =
-        "jdbc:mysql://localhost:3306/shift_db?useSSL=false&serverTimezone=Asia/Tokyo";
-    private static final String USER = "cooper";
-    private static final String PASSWORD = "CooperG10!";
+    private static final long serialVersionUID = 1L;
 
     private ShiftRequest parseJsonToShiftRequest(String json) {
-        // 例: {"timeSlotId":1,"helpDay":"2023-10-01","reason":"理由"}
+        // 例: {"timeSlotId":1,"helpDay":"2023-10-01"}
         json = json.trim().replaceAll("^\\{|\\}$", ""); // 外側{}を除去
         String[] pairs = json.split(",");
         int timeSlotId = 0;
         String helpDay = "";
-        String reason = "";
         for (String pair : pairs) {
             String[] keyValue = pair.split(":", 2);
             if (keyValue.length == 2) {
@@ -46,13 +43,10 @@ public class ShiftSubmitServlet extends HttpServlet {
                     case "helpDay":
                         helpDay = value;
                         break;
-                    case "reason":
-                        reason = value;
-                        break;
                 }
             }
         }
-        return new ShiftRequest(timeSlotId, helpDay, reason);
+        return new ShiftRequest(timeSlotId, helpDay);
     }
 
     @Override
@@ -65,15 +59,15 @@ public class ShiftSubmitServlet extends HttpServlet {
 
         // セッション確認
         HttpSession session = request.getSession(false);
-        if (session == null || session.getAttribute("userId") == null) {
+        if (session == null || session.getAttribute("userID") == null) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.getWriter().write("{\"status\":\"unauthorized\"}");
             return;
         }
-        String userId = (String) session.getAttribute("userId");
+        String userId = (String) session.getAttribute("userID");
 
         
-        StringBuilder sb = new StringBuilder();// ===== リクエストボディ(JSON)を読む =====;
+        StringBuilder sb = new StringBuilder();
         try (BufferedReader reader = request.getReader()) {
             String line;
             while ((line = reader.readLine()) != null) {
@@ -86,20 +80,20 @@ public class ShiftSubmitServlet extends HttpServlet {
         // デバッグ用（Tomcatログに出る）
         System.out.println("受信JSON: " + json);
 
-        // JSON → Java(Gsonの代わりに手動パース)
+        // JSON → Java
         ShiftRequest req = parseJsonToShiftRequest(json);
 
         // DB保存
         String selectSlotSql =
             "SELECT start_minute, end_minute FROM timeslot WHERE id = ?";
 
-        String insertHelpSql =
-            "INSERT INTO help (" +
-            "help_want_userID, help_want_day, help_want_time_start, " +
-            "help_want_time_end, apply, help_reason" +
-            ") VALUES (?, ?, ?, ?, 0, ?)";
+        String insertRequestSql =
+            "INSERT INTO request (" +
+            "userID, shift_request_day, shift_request_time_start, " +
+            "shift_request_time_end" +
+            ") VALUES (?, ?, ?, ?)";
 
-        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD)){
+        try (Connection conn = DBconfig.getConnection()) {
             // ① TimeSlot から時間を取得
             int startMinute;
             int endMinute;
@@ -121,13 +115,12 @@ public class ShiftSubmitServlet extends HttpServlet {
             Time startTime = new Time(startMinute * 60L * 1000);
             Time endTime = new Time(endMinute * 60L * 1000);
 
-            // ② help テーブルに INSERT
-            try (PreparedStatement ps = conn.prepareStatement(insertHelpSql)) {
+            // ② request テーブルに INSERT
+            try (PreparedStatement ps = conn.prepareStatement(insertRequestSql)) {
                 ps.setString(1, userId);
                 ps.setDate(2, Date.valueOf(req.getHelpDay()));
                 ps.setTime(3, startTime);
                 ps.setTime(4, endTime);
-                ps.setString(5, req.getReason());
 
                 ps.executeUpdate();
             }
@@ -144,10 +137,13 @@ public class ShiftSubmitServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
+        System.out.println("doGet called"); // デバッグ
+
         response.setContentType("application/json; charset=UTF-8");
 
-        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD)) {
+        try (Connection conn = DBconfig.getConnection()) {
             String sql = "SELECT id, name FROM timeslot ORDER BY start_minute";
+            System.out.println("DB CONNECT OK");
             try (PreparedStatement ps = conn.prepareStatement(sql);
                  ResultSet rs = ps.executeQuery()) {
 
@@ -165,6 +161,8 @@ public class ShiftSubmitServlet extends HttpServlet {
         } catch (Exception e) {
             e.printStackTrace();
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            response.setContentType("application/json; charset=UTF-8");
+            response.getWriter().write("{\"error\":\"timeslot_fetch_failed\"}");
         }
     }
 

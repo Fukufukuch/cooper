@@ -14,6 +14,10 @@ public class ShiftRequest {
     private String reason;
 
     // コンストラクタ
+    public ShiftRequest(int timeSlotId, String helpDay) {
+        this(timeSlotId, helpDay, "");
+    }
+
     public ShiftRequest(int timeSlotId, String helpDay, String reason) {
         this.timeSlotId = timeSlotId;
         this.helpDay = helpDay;
