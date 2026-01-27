@@ -81,9 +81,14 @@
     window.addEventListener("load", loadTimeslots);
 
     function loadTimeslots() {
+        console.log("loadTimeslots called");
         fetch("<%= request.getContextPath() %>/user/shift/submit/api")
-            .then(res => res.json())
+            .then(res => {
+                console.log("response status:", res.status);
+                return res.json();
+            })
             .then(timeslots => {
+                console.log("timeslots:", timeslots);
                 timeslots.forEach(timeslot => {
                     const option = document.createElement("option");
                     option.value = timeslot.id;
@@ -171,7 +176,7 @@
             body: JSON.stringify(shiftRequests)
         })
         .then(res => res.json())
-        .then(data => {
+        .then (data => {
             if (data.status === "success") {
                 alert("提出完了！");
                 shiftRequests = [];

@@ -65,12 +65,12 @@ public class ShiftSubmitServlet extends HttpServlet {
 
         // セッション確認
         HttpSession session = request.getSession(false);
-        if (session == null || session.getAttribute("userId") == null) {
+        if (session == null || session.getAttribute("userID") == null) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.getWriter().write("{\"status\":\"unauthorized\"}");
             return;
         }
-        String userId = (String) session.getAttribute("userId");
+        String userId = (String) session.getAttribute("userID");
 
         
         StringBuilder sb = new StringBuilder();// ===== リクエストボディ(JSON)を読む =====;
@@ -143,6 +143,8 @@ public class ShiftSubmitServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+
+        System.out.println("doGet called"); // デバッグ
 
         response.setContentType("application/json; charset=UTF-8");
 
