@@ -28,8 +28,8 @@ public class HelpResponseServlet extends HttpServlet {
             throws ServletException, IOException {
         
         HttpSession session = request.getSession(false);
-        String userId = (String) session.getAttribute("userId");
-        System.out.println("userId in HelpResponse: " + userId); // デバッグ
+        String userId = (String) session.getAttribute("userID");
+        System.out.println("userID in HelpResponse: " + userId); // デバッグ
 
         try (Connection con = DBconfig.getConnection()) {
 
@@ -97,9 +97,6 @@ public class HelpResponseServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/LoginServlet");
             return;
         }
-        String userId = (String) session.getAttribute("userID");
-
-        HttpSession session = request.getSession(false);
         String userId = (String) session.getAttribute("userID");
 
         String helpId = request.getParameter("help_id");
