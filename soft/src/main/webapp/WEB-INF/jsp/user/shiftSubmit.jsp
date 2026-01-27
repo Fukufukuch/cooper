@@ -207,7 +207,7 @@
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify(shiftRequests[0])
+            body: JSON.stringify(shiftRequests)
         })
         .then(res => res.json())
         .then(data => {

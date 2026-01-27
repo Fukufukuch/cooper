@@ -25,28 +25,36 @@ import jp.ac.kochi.tech.ShiftRequest;
 public class ShiftSubmitServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
 
-    private ShiftRequest parseJsonToShiftRequest(String json) {
-        // 例: {"timeSlotId":1,"helpDay":"2023-10-01"}
-        json = json.trim().replaceAll("^\\{|\\}$", ""); // 外側{}を除去
-        String[] pairs = json.split(",");
-        int timeSlotId = 0;
-        String helpDay = "";
-        for (String pair : pairs) {
-            String[] keyValue = pair.split(":", 2);
-            if (keyValue.length == 2) {
-                String key = keyValue[0].trim().replaceAll("^\"|\"$", "");
-                String value = keyValue[1].trim().replaceAll("^\"|\"$", "");
-                switch (key) {
-                    case "timeSlotId":
-                        timeSlotId = Integer.parseInt(value);
-                        break;
-                    case "helpDay":
-                        helpDay = value;
-                        break;
+    // JSON配列 → List<ShiftRequest>
+    private List<ShiftRequest> parseJsonArray(String json) {
+        List<ShiftRequest> list = new ArrayList<>();
+
+        json = json.trim();
+        json = json.substring(1, json.length() - 1); // [ ]
+
+        String[] objects = json.split("\\},\\{");
+
+        for (String obj : objects) {
+            obj = obj.replace("{", "").replace("}", "");
+            String[] pairs = obj.split(",");
+
+            int timeSlotId = 0;
+            String helpDay = "";
+
+            for (String pair : pairs) {
+                String[] kv = pair.split(":", 2);
+                String key = kv[0].replace("\"", "").trim();
+                String value = kv[1].replace("\"", "").trim();
+
+                if ("timeSlotId".equals(key)) {
+                    timeSlotId = Integer.parseInt(value);
+                } else if ("helpDay".equals(key)) {
+                    helpDay = value;
                 }
             }
+            list.add(new ShiftRequest(timeSlotId, helpDay));
         }
-        return new ShiftRequest(timeSlotId, helpDay);
+        return list;
     }
 
     @Override
@@ -75,13 +83,13 @@ public class ShiftSubmitServlet extends HttpServlet {
             }
         }
 
-        String json = sb.toString();
+        //String json = sb.toString();
 
         // デバッグ用（Tomcatログに出る）
-        System.out.println("受信JSON: " + json);
+        System.out.println("受信JSON: " + sb.toString());
 
         // JSON → Java
-        ShiftRequest req = parseJsonToShiftRequest(json);
+        List<ShiftRequest> reqList = parseJsonArray(sb.toString());
 
         // DB保存
         String selectSlotSql =
@@ -95,36 +103,34 @@ public class ShiftSubmitServlet extends HttpServlet {
 
         try (Connection conn = DBconfig.getConnection()) {
             // ① TimeSlot から時間を取得
-            int startMinute;
-            int endMinute;
-        try (PreparedStatement ps = conn.prepareStatement(selectSlotSql)) {
-                ps.setInt(1, req.getTimeSlotId());
-                ResultSet rs = ps.executeQuery();
+            for (ShiftRequest req : reqList) {
 
-                if (!rs.next()) {
-                    response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                    response.getWriter().write("{\"status\":\"invalid_timeslot\"}");
-                    return;
+                int startMinute;
+                int endMinute;
+
+                try (PreparedStatement ps = conn.prepareStatement(selectSlotSql)) {
+                    ps.setInt(1, req.getTimeSlotId());
+                    ResultSet rs = ps.executeQuery();
+                    if (!rs.next()) continue;
+
+                    startMinute = rs.getInt("start_minute");
+                    endMinute = rs.getInt("end_minute");
                 }
 
-                startMinute = rs.getInt("start_minute");
-                endMinute = rs.getInt("end_minute");
+                Time startTime = new Time(startMinute * 60L * 1000);
+                Time endTime = new Time(endMinute * 60L * 1000);
+
+                try (PreparedStatement ps = conn.prepareStatement(insertRequestSql)) {
+                    ps.setString(1, userId);
+                    ps.setDate(2, Date.valueOf(req.getHelpDay()));
+                    ps.setTime(3, startTime);
+                    ps.setTime(4, endTime);
+                    ps.executeUpdate();
+                }
             }
 
-            // 分 → Time に変換
-            Time startTime = new Time(startMinute * 60L * 1000);
-            Time endTime = new Time(endMinute * 60L * 1000);
-
-            // ② request テーブルに INSERT
-            try (PreparedStatement ps = conn.prepareStatement(insertRequestSql)) {
-                ps.setString(1, userId);
-                ps.setDate(2, Date.valueOf(req.getHelpDay()));
-                ps.setTime(3, startTime);
-                ps.setTime(4, endTime);
-
-                ps.executeUpdate();
-            }
             response.getWriter().write("{\"status\":\"success\"}");
+
 
         } catch (Exception e) {
             e.printStackTrace();
