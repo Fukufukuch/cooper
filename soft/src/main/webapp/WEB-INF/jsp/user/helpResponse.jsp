@@ -32,6 +32,43 @@ request.setAttribute("activeTab", "helpResponse");
 			border-left: 3px solid #007bff;
 		}
 		.btn-success { background-color: #28a745; border: none; }
+		.help-list {
+			margin-top: 20px;
+		}
+		.help-item {
+			background-color: #fff;
+			border: 1px solid #ddd;
+			border-radius: 8px;
+			padding: 15px;
+			margin-bottom: 10px;
+			box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+		}
+		.help-date {
+			font-size: 1.2rem;
+			font-weight: bold;
+			color: #333;
+		}
+		.help-time {
+			font-size: 1rem;
+			color: #007bff;
+		}
+		.help-reason {
+			font-size: 0.9rem;
+			color: #666;
+			margin: 5px 0;
+		}
+		.apply-btn {
+			background-color: #28a745;
+			color: white;
+			border: none;
+			padding: 10px 15px;
+			border-radius: 4px;
+			cursor: pointer;
+			transition: background-color 0.3s;
+		}
+		.apply-btn:hover {
+			background-color: #218838;
+		}
 	</style>
 </head>
 <body>
@@ -93,6 +130,31 @@ request.setAttribute("activeTab", "helpResponse");
 				</div>
 			<% } %>
 		</div>
+
+        <div class="help-list">
+        <%
+            List<Map<String, String>> availableHelps = (List<Map<String, String>>) request.getAttribute("availableHelps");
+            if (availableHelps != null && !availableHelps.isEmpty()) {
+                for (Map<String, String> h : availableHelps) {
+        %>
+            <div class="help-item">
+                <div class="help-date"><%= h.get("date") %></div>
+                <div class="help-time"><%= h.get("time") %></div>
+                <div class="help-reason">理由: <%= h.get("reason") %></div>
+                <form action="<%= request.getContextPath() %>/HelpResponseServlet" method="post" style="display:inline;">
+                    <input type="hidden" name="help_id" value="<%= h.get("helpID") %>">
+                    <button type="submit" class="btn apply-btn">このシフトに応募する</button>
+                </form>
+            </div>
+        <%
+                }
+            } else {
+        %>
+            <p>募集中のヘルプがありません。</p>
+        <%
+            }
+        %>
+        </div>
 	</div>
 </body>
 </html>

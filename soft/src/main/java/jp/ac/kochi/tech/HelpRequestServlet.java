@@ -79,7 +79,7 @@ public class HelpRequestServlet extends HttpServlet {
 
             // 自分のシフトで使用されているtimeslotのname一覧（重複除去）
             String sqlTypes = """
-                SELECT DISTINCT t.name
+                SELECT DISTINCT t.name,t.start_minute
                 FROM shift s
                 JOIN timeslot t ON s.start_minute = t.start_minute AND s.end_minute = t.end_minute
                 WHERE s.workerID = ?
@@ -110,9 +110,13 @@ public class HelpRequestServlet extends HttpServlet {
         request.setCharacterEncoding("UTF-8");
 
         HttpSession session = request.getSession(false);
-        String userId = (String) session.getAttribute("userId");
+        String userId = (String) session.getAttribute("userID");
 
-        int shiftId = Integer.parseInt(request.getParameter("shift_id"));
+        String shiftIdStr = request.getParameter("shift_id");
+        if (shiftIdStr == null || shiftIdStr.isEmpty()) {
+            throw new ServletException("シフトを選択してください");
+        }
+        int shiftId = Integer.parseInt(shiftIdStr);
         String reason = request.getParameter("help_reason");
 
         try (Connection con = DBconfig.getConnection()) {
