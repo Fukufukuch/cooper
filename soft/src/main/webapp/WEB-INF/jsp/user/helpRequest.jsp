@@ -34,7 +34,7 @@
           <div class="form-group">
             <label>代わってほしいシフト</label>
             <select name="shift_id" class="form-select" required>
-                <option disabled selected>シフトを選択</option>
+                <option value="" disabled selected>シフトを選択</option>
                 <%
                     List<Map<String, Object>> confirmedShifts =
                     (List<Map<String, Object>>) request.getAttribute("confirmedShifts");
