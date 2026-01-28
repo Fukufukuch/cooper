@@ -92,39 +92,22 @@ public class ShiftSubmitServlet extends HttpServlet {
         List<ShiftRequest> reqList = parseJsonArray(sb.toString());
 
         // DB保存
-        String selectSlotSql =
-            "SELECT start_minute, end_minute FROM timeslot WHERE id = ?";
+        //String selectSlotSql =
+        //    "SELECT start_minute, end_minute FROM timeslot WHERE id = ?";
 
         String insertRequestSql =
-            "INSERT INTO request (" +
-            "userID, shift_request_day, shift_request_time_start, " +
-            "shift_request_time_end" +
-            ") VALUES (?, ?, ?, ?)";
+            "INSERT INTO worker_shift_request (" +
+            "workerID, date, timeslotID " +
+            ") VALUES (?, ?, ?)";
 
         try (Connection conn = DBconfig.getConnection()) {
             // ① TimeSlot から時間を取得
             for (ShiftRequest req : reqList) {
 
-                int startMinute;
-                int endMinute;
-
-                try (PreparedStatement ps = conn.prepareStatement(selectSlotSql)) {
-                    ps.setInt(1, req.getTimeSlotId());
-                    ResultSet rs = ps.executeQuery();
-                    if (!rs.next()) continue;
-
-                    startMinute = rs.getInt("start_minute");
-                    endMinute = rs.getInt("end_minute");
-                }
-
-                Time startTime = new Time(startMinute * 60L * 1000);
-                Time endTime = new Time(endMinute * 60L * 1000);
-
                 try (PreparedStatement ps = conn.prepareStatement(insertRequestSql)) {
                     ps.setString(1, userId);
                     ps.setDate(2, Date.valueOf(req.getHelpDay()));
-                    ps.setTime(3, startTime);
-                    ps.setTime(4, endTime);
+                    ps.setInt(3, req.getTimeSlotId());
                     ps.executeUpdate();
                 }
             }
