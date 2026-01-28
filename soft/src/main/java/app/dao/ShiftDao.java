@@ -24,13 +24,14 @@ public class ShiftDao {
     public List<ShiftRow> findByDateRange(LocalDate from, LocalDate to) throws SQLException {
 
         String sql =
-                "SELECT s.id AS shiftID, s.workerID AS userID, u.username, " +
-                "       s.date, s.start_minute, s.end_minute, s.positionID " +
-                "FROM shift s " +
-                "JOIN worker w ON s.workerID = w.workerID " +
-                "JOIN users u  ON u.userID = w.workerID " +
-                "WHERE s.date >= ? AND s.date <= ? " +
-                "ORDER BY s.date ASC, s.start_minute ASC, s.id ASC";
+            "SELECT s.id AS shiftID, s.workerID AS userID, u.username, " +
+            "       s.date, s.start_minute, s.end_minute, s.positionID, s.shift_timetable, p.name AS positionName " +
+            "FROM shift s " +
+            "JOIN worker w ON s.workerID = w.workerID " +
+            "JOIN users u  ON u.userID = w.workerID " +
+            "LEFT JOIN `position` p ON s.positionID = p.id " +
+            "WHERE s.date >= ? AND s.date <= ? " +
+            "ORDER BY s.date ASC, s.start_minute ASC, s.id ASC";
 
         List<ShiftRow> list = new ArrayList<>();
 
@@ -53,13 +54,16 @@ public class ShiftDao {
                     int start = rs.getInt("start_minute");
                     int end = rs.getInt("end_minute");
 
-                    // 旧画面互換：timetable / timetableNumber を minutes から生成
+                    // DB の shift_timetable を直接使用
+                    r.shiftTimetable = rs.getString("shift_timetable");
+
+                    // timetableNumber は minutes から生成（互換性のため）
                     ShiftType st = mapToShiftType(start, end);
-                    r.shiftTimetable = st.label;         // "早番"/"中番"/"遅番"
                     r.shiftTimetableNumber = st.number;  // 1/2/3
 
                     // 追加情報（今後画面で使いたくなったら）
                     r.positionID = (Integer) rs.getObject("positionID");
+                    r.positionName = rs.getString("positionName");
                     r.startMinute = start;
                     r.endMinute = end;
 
@@ -112,46 +116,46 @@ public class ShiftDao {
             }
 
             // 2) positionID を users から取得
-int positionID;
-try (PreparedStatement ps = con.prepareStatement(getPositionId)) {
-    ps.setString(1, userID);
-    try (ResultSet rs = ps.executeQuery()) {
-        if (!rs.next()) {
-            con.rollback();
-            throw new SQLException("usersに該当ユーザーがいません: " + userID);
-        }
-        positionID = rs.getInt("Position");
-    }
-}
-
-// 2.5) positionID が position テーブルに存在するかチェック。無ければ「未設定」にフォールバック
-String existsPos = "SELECT 1 FROM position WHERE id = ? LIMIT 1";
-try (PreparedStatement ps = con.prepareStatement(existsPos)) {
-    ps.setInt(1, positionID);
-    try (ResultSet rs = ps.executeQuery()) {
-        if (!rs.next()) {
-            // 未設定ポジションを確保
-            String ensureDefaultPos =
-                    "INSERT INTO position(name, min_workers, max_workers, require_authority_workers) " +
-                    "SELECT '未設定', 0, 0, 0 FROM DUAL " +
-                    "WHERE NOT EXISTS (SELECT 1 FROM position WHERE name='未設定')";
-            try (PreparedStatement ps2 = con.prepareStatement(ensureDefaultPos)) {
-                ps2.executeUpdate();
-            }
-
-            // 未設定のidを使う
-            String getDefaultPos = "SELECT id FROM position WHERE name='未設定' ORDER BY id LIMIT 1";
-            try (PreparedStatement ps3 = con.prepareStatement(getDefaultPos);
-                 ResultSet rs3 = ps3.executeQuery()) {
-                if (!rs3.next()) {
-                    con.rollback();
-                    throw new SQLException("positionの未設定が取得できません");
+            int positionID;
+            try (PreparedStatement ps = con.prepareStatement(getPositionId)) {
+                ps.setString(1, userID);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (!rs.next()) {
+                        con.rollback();
+                        throw new SQLException("usersに該当ユーザーがいません: " + userID);
+                    }
+                    positionID = rs.getInt("Position");
                 }
-                positionID = rs3.getInt("id");
             }
-        }
-    }
-}
+
+            // 2.5) positionID が position テーブルに存在するかチェック。無ければ「未設定」にフォールバック
+            String existsPos = "SELECT 1 FROM `position` WHERE id = ? LIMIT 1";
+            try (PreparedStatement ps = con.prepareStatement(existsPos)) {
+                ps.setInt(1, positionID);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (!rs.next()) {
+                        // 未設定ポジションを確保
+                            String ensureDefaultPos =
+                                "INSERT INTO `position`(name, min_workers, max_workers, require_authority_workers) " +
+                                "SELECT '未設定', 0, 0, 0 FROM DUAL " +
+                                "WHERE NOT EXISTS (SELECT 1 FROM `position` WHERE name='未設定')";
+                        try (PreparedStatement ps2 = con.prepareStatement(ensureDefaultPos)) {
+                            ps2.executeUpdate();
+                        }
+
+                        // 未設定のidを使う
+                        String getDefaultPos = "SELECT id FROM `position` WHERE name='未設定' ORDER BY id LIMIT 1";
+                        try (PreparedStatement ps3 = con.prepareStatement(getDefaultPos);
+                            ResultSet rs3 = ps3.executeQuery()) {
+                            if (!rs3.next()) {
+                                con.rollback();
+                                throw new SQLException("positionの未設定が取得できません");
+                            }
+                            positionID = rs3.getInt("id");
+                        }
+                    }
+                }
+            }
 
 
             // 3) shift INSERT
@@ -238,6 +242,7 @@ try (PreparedStatement ps = con.prepareStatement(existsPos)) {
         public int shiftID;                 // = shift.id
         public String userID;               // = shift.workerID
         public String username;
+            public String positionName;
         public LocalDate shiftInfoDay;      // = shift.date
         public String shiftTimetable;       // minutesから生成
         public Integer shiftTimetableNumber;// minutesから生成

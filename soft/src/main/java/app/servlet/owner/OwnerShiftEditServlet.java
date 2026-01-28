@@ -1,6 +1,7 @@
 package app.servlet.owner;
 
 import app.dao.ShiftDao;
+import app.repository.TimeSlotRepository;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -33,6 +34,11 @@ public class OwnerShiftEditServlet extends HttpServlet {
 
             String yearParam = req.getParameter("year");
             String monthParam = req.getParameter("month");
+           
+           // timeslot データを取得
+           TimeSlotRepository tsRepo = new TimeSlotRepository();
+           req.setAttribute("timeslots", tsRepo.findAll());
+           
 
             int year = (yearParam == null || yearParam.isBlank())
                     ? now.getYear()

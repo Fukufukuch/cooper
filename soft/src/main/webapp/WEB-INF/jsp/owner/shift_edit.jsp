@@ -2,6 +2,7 @@
 <%@ page import="java.util.*" %>
 <%@ page import="java.time.*" %>
 <%@ page import="app.dao.ShiftDao.ShiftRow" %>
+<%@ page import="app.entity.TimeSlotEntity" %>
 
 
 
@@ -168,7 +169,16 @@
                         for (ShiftRow r : userShifts.get(userId)) {
                     %>
                       <div class="shift-item">
-                        <div class="shift-user"><%= r.username %></div>
+                        <div class="shift-user">
+                          <%= r.username %>
+                          <%
+                            if (r.positionName != null && !r.positionName.isBlank()) {
+                          %>
+                            (<%= r.positionName %>)
+                          <%
+                            }
+                          %>
+                        </div>
                         <div class="shift-time"><%= r.shiftTimetable %></div>
                         <form method="post" action="<%= request.getContextPath() %>/owner/shift/delete" style="margin-top: 1px;">
                           <input type="hidden" name="shiftID" value="<%= r.shiftID %>">
@@ -214,17 +224,17 @@
       <div class="form-row">
         <label>時間帯</label>
         <select class="input" name="timetable">
-          <option value="早番">早番</option>
-          <!--option value="午前">午前</option-->
-          <option value="中番">中番</option>
-          <!--option value="午後">午後</option-->
-          <option value="遅番">遅番</option>
+            <%
+              List<TimeSlotEntity> timeslots = (List<TimeSlotEntity>)request.getAttribute("timeslots");
+              if (timeslots != null) {
+                for (TimeSlotEntity ts : timeslots) {
+            %>
+              <option value="<%= ts.getName() %>"><%= ts.getName() %></option>
+            <%
+                }
+              }
+            %>
         </select>
-      </div>
-
-      <div class="form-row">
-        <label>時間帯番号（任意）</label>
-        <input class="input" type="number" name="timetableNumber" min="1" max="5" placeholder="1=早番,2=午前,3=中番,4=午後,5=遅番">
       </div>
 
       <div class="form-actions">
