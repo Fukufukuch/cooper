@@ -140,13 +140,13 @@ document.addEventListener("DOMContentLoaded", () => {
             console.log("s.timeSlotName:", s.timeSlotName);
             const div = document.createElement("div");
             div.innerHTML = `
-                <div>日付 ${s.helpDay}</div>
-                <div>時刻 ${s.timeSlotName}</div>
+                <div>📅`+ s.helpDay + `</div>
+                <div>⏰`+ s.timeSlotName + `</div>
             `;
             shiftList.appendChild(div);
         });
 
-        countSpan.textContent = `${shiftRequests.length}件`;
+        countSpan.textContent = shiftRequests.length + "件";
         
     }
 
