@@ -32,7 +32,7 @@ public class CalendarServlet extends HttpServlet {
 
         if (userID == null) {
             System.out.println("★★ CalendarServlet: ログイン情報がありません ★★");
-            response.sendRedirect(request.getContextPath() + "/login.jsp");
+            response.sendRedirect(request.getContextPath() + "/LoginServlet");
             return;
         }
 

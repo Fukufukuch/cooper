@@ -31,7 +31,7 @@ public class OwnerUserCreateServlet extends HttpServlet {
             resp.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
             resp.setHeader("Pragma", "no-cache");
             resp.setHeader("Expires", "0");
-            resp.sendRedirect(req.getContextPath() + "/login.jsp");
+            resp.sendRedirect(req.getContextPath() + "/LoginServlet");
             return;
         }
 
@@ -54,7 +54,7 @@ public class OwnerUserCreateServlet extends HttpServlet {
             resp.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
             resp.setHeader("Pragma", "no-cache");
             resp.setHeader("Expires", "0");
-            resp.sendRedirect(req.getContextPath() + "/login.jsp");
+            resp.sendRedirect(req.getContextPath() + "/LoginServlet");
             return;
         }
 

@@ -47,7 +47,7 @@ public class Logout extends HttpServlet {
 		};
 
 		RequestDispatcher dispatcher =
-				request.getRequestDispatcher("/login.jsp");
+				request.getRequestDispatcher("/WEB-INF/jsp/common/login.jsp");
 		dispatcher.forward(request, response);
 	}
 

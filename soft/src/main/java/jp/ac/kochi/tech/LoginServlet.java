@@ -23,7 +23,7 @@ public class LoginServlet extends HttpServlet {
 	//ログイン画面を表示させる
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		RequestDispatcher dispatcher =
-				request.getRequestDispatcher("/login.jsp");
+				request.getRequestDispatcher("/WEB-INF/jsp/common/login.jsp");
 		dispatcher.forward(request, response);
 	}
 
@@ -58,7 +58,7 @@ public class LoginServlet extends HttpServlet {
 			// ログイン失敗 → ログイン画面へ遷移
 			System.out.println("ログイン失敗");
 			RequestDispatcher dispatcher =
-					request.getRequestDispatcher("/login.jsp");
+					request.getRequestDispatcher("/WEB-INF/jsp/common/login.jsp");
 			dispatcher.forward(request, response);
 		}
 	}
