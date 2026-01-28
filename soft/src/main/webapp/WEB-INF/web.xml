@@ -54,4 +54,26 @@
         <url-pattern>/HelpResponseServlet</url-pattern>
     </filter-mapping>
 
+    <!-- ShiftController Servlet Mapping -->
+    <servlet>
+        <servlet-name>ShiftController</servlet-name>
+        <servlet-class>controller.ShiftController</servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>ShiftController</servlet-name>
+        <url-pattern>/shiftGenerate/generate</url-pattern>
+    </servlet-mapping>
+
+    <!-- ShiftSettingController Servlet Mapping -->
+    <servlet>
+        <servlet-name>ShiftSettingController</servlet-name>
+        <servlet-class>controller.ShiftSettingController</servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>ShiftSettingController</servlet-name>
+        <url-pattern>/shiftGenerate/confirm</url-pattern>
+    </servlet-mapping>
+
 </web-app>

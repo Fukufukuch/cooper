@@ -31,7 +31,7 @@ public class ShiftController extends HttpServlet {
         req.setAttribute("positions", positions);
 
         try {
-            req.getRequestDispatcher("/result.jsp")
+            req.getRequestDispatcher("/WEB-INF/jsp/shiftGenerate/result.jsp")
                .forward(req, resp);
         } catch (Exception e) {
             throw new IOException(e);

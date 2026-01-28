@@ -8,7 +8,7 @@
 </head>
 <body>
 <div class="container">
-  <div class="h1">シフト自動生成システム</div>
+  <div class="h1">オートシフタ</div>
   <div class="sub">設定</div>
 
   <%@ include file="/WEB-INF/jsp/common/owner_tabs.jspf" %>
