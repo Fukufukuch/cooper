@@ -127,8 +127,10 @@
 
   <!-- ===== 一覧（表形式） ===== -->
   <div class="card" style="margin-top:14px;">
-    <div class="section-title">今月のシフト（<%= year %>/<%= month %>）</div>
-    <p class="section-desc">エクセル形式で表示（削除できます）</p>
+    <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 10px;">
+        <a href="<%= request.getContextPath() %>/shiftGenerate/index.jsp" class="btn">シフト自動生成</a>
+        <div class="section-title" style="margin: 0;">今月のシフト（<%= year %>/<%= month %>）</div>
+    </div>
 
     <% if (rows == null || rows.isEmpty()) { %>
       <div class="note">この月のシフトはありません。</div>
@@ -213,14 +215,16 @@
         <label>時間帯</label>
         <select class="input" name="timetable">
           <option value="早番">早番</option>
+          <!--option value="午前">午前</option-->
           <option value="中番">中番</option>
+          <!--option value="午後">午後</option-->
           <option value="遅番">遅番</option>
         </select>
       </div>
 
       <div class="form-row">
         <label>時間帯番号（任意）</label>
-        <input class="input" type="number" name="timetableNumber" min="1" max="3" placeholder="1=早番,2=中番,3=遅番">
+        <input class="input" type="number" name="timetableNumber" min="1" max="5" placeholder="1=早番,2=午前,3=中番,4=午後,5=遅番">
       </div>
 
       <div class="form-actions">

@@ -82,7 +82,7 @@ public class ShiftDao {
 
     /**
      * 追加：旧入力（userID/day/timetable/timetableNumber）を受け取り、
-     * 新shift（date/workerID/positionID/start_minute/end_minute）に変換して INSERT。
+     * 新shift（date/workerID/positionID/start_minute/end_minute/shift_timetable）に変換して INSERT。
      */
     public int insert(String userID, LocalDate day, String timetable, Integer timetableNumber) throws SQLException {
 
@@ -90,6 +90,7 @@ public class ShiftDao {
         ShiftType st = mapToShiftType(timetable, timetableNumber);
         int startMinute = st.startMinute;
         int endMinute = st.endMinute;
+        String shiftTimetable = st.shiftTimetable;  // "早"/"中"/"遅" など
 
         // worker が無いと shift のFKで落ちるので確保（存在してれば何もしない）
         String ensureWorker = "INSERT IGNORE INTO worker(workerID) VALUES (?)";
@@ -98,8 +99,8 @@ public class ShiftDao {
         String getPositionId = "SELECT Position FROM users WHERE userID = ?";
 
         String insertShift =
-                "INSERT INTO shift (date, workerID, positionID, start_minute, end_minute) " +
-                "VALUES (?, ?, ?, ?, ?)";
+                "INSERT INTO shift (date, workerID, positionID, start_minute, end_minute, shift_timetable) " +
+                "VALUES (?, ?, ?, ?, ?, ?)";
 
         try (Connection con = Db.getConnection()) {
             con.setAutoCommit(false);
@@ -160,6 +161,7 @@ try (PreparedStatement ps = con.prepareStatement(existsPos)) {
                 ps.setInt(3, positionID);
                 ps.setInt(4, startMinute);
                 ps.setInt(5, endMinute);
+                ps.setString(6, shiftTimetable);
                 ps.executeUpdate();
 
                 try (ResultSet keys = ps.getGeneratedKeys()) {
@@ -186,12 +188,15 @@ try (PreparedStatement ps = con.prepareStatement(existsPos)) {
         final Integer number;
         final int startMinute;
         final int endMinute;
+        final String shiftTimetable;  // shift_timetableカラム用（"早番"/"中番"/"遅番"など）
 
         ShiftType(String label, Integer number, int startMinute, int endMinute) {
             this.label = label;
             this.number = number;
             this.startMinute = startMinute;
             this.endMinute = endMinute;
+            // label全体（"早番"/"中番"/"遅番"など）をshift_timetableに使用
+            this.shiftTimetable = label != null ? label : "";
         }
     }
 
@@ -205,11 +210,11 @@ try (PreparedStatement ps = con.prepareStatement(existsPos)) {
             return new ShiftType("遅番", 3, 17 * 60, 21 * 60);
         }
 
-        // timetable文字で判断
+        // timetable文字で判断（フォーム入力の「早番"/"中番"/"遅番"に対応）
         if (timetable != null) {
-            if (timetable.contains("早")) return new ShiftType("早番", 1, 9 * 60, 13 * 60);
-            if (timetable.contains("中")) return new ShiftType("中番", 2, 13 * 60, 17 * 60);
-            if (timetable.contains("遅")) return new ShiftType("遅番", 3, 17 * 60, 21 * 60);
+            if (timetable.contains("早番")) return new ShiftType("早番", 1, 9 * 60, 13 * 60);
+            if (timetable.contains("中番")) return new ShiftType("中番", 2, 13 * 60, 17 * 60);
+            if (timetable.contains("遅番")) return new ShiftType("遅番", 3, 17 * 60, 21 * 60);
         }
 
         // 迷ったら「落ちない」こと優先で遅番に寄せる
