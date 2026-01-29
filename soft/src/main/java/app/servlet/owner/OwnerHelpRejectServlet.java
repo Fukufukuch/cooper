@@ -1,14 +1,14 @@
 package app.servlet.owner;
 
-import app.dao.RequestDao;
+import app.db.Db;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.*;
 
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 
 @WebServlet("/owner/help/reject")
 public class OwnerHelpRejectServlet extends HttpServlet {
@@ -16,28 +16,28 @@ public class OwnerHelpRejectServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
-        
-        jakarta.servlet.http.HttpSession session = req.getSession(false);
+
+        HttpSession session = req.getSession(false);
         if (session == null || session.getAttribute("userID") == null) {
-            resp.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-            resp.setHeader("Pragma", "no-cache");
-            resp.setHeader("Expires", "0");
             resp.sendRedirect(req.getContextPath() + "/LoginServlet");
             return;
         }
 
         req.setCharacterEncoding("UTF-8");
+        int helpID = Integer.parseInt(req.getParameter("helpID"));
 
-        int requestID = Integer.parseInt(req.getParameter("requestID"));
+        try (Connection con = Db.getConnection();
+             PreparedStatement ps =
+                     con.prepareStatement("UPDATE help SET apply = 0, helper_userID = NULL WHERE helpID = ?")) {
 
-        try {
-            RequestDao dao = new RequestDao();
-            dao.reject(requestID);
-
-            resp.sendRedirect(req.getContextPath() + "/owner/help");
+            ps.setInt(1, helpID);
+            ps.executeUpdate();
 
         } catch (Exception e) {
             throw new ServletException(e);
         }
+
+        session.setAttribute("flash", "応募を却下しました（募集中に戻しました）。");
+        resp.sendRedirect(req.getContextPath() + "/owner/help");
     }
 }
