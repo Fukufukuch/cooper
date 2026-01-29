@@ -13,12 +13,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
 import jp.ac.kochi.tech.DBconfig;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-
-import jp.ac.kochi.tech.DBconfig;
+;
 
 /**
  * 労働者がヘルプ募集（シフト代行依頼）を投稿し、一時保存するサーブレット
@@ -30,49 +25,34 @@ public class HelpRequestServlet extends HttpServlet {
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) 
 			throws ServletException, IOException {
-		
-		String userId = "USER_KOSHIRO"; // 本来はセッション
+        
+        HttpSession session = request.getSession(false);
+        String userId = (String) session.getAttribute("userID");
+        System.out.println("userID: " + userId); // デバッグ
 
-		try (Connection con = DBconfig.getConnection()) {
+        try (Connection con = DBconfig.getConnection()) {
 
-            // ① 自分のシフト日一覧（重複除去）
-            String sqlDate = """
-                SELECT DISTINCT date
-                FROM shift
-                WHERE workerID = ?
-                ORDER BY date
-            """;
-            PreparedStatement psDate = con.prepareStatement(sqlDate);
-            psDate.setString(1, userId);
-            ResultSet rsDate = psDate.executeQuery();
-
-            List<String> shiftDates = new ArrayList<>();
-            while (rsDate.next()) {
-                shiftDates.add(rsDate.getString("date"));
+            // 自分のシフト一覧
+            String sqlShifts = "SELECT id AS shift_id, date, shift_timetable FROM shift WHERE workerID = ? ORDER BY date, shift_timetable";
+            PreparedStatement psShifts = con.prepareStatement(sqlShifts);
+            psShifts.setString(1, userId);
+            ResultSet rsShifts = psShifts.executeQuery();
+            List<Map<String, Object>> confirmedShifts = new ArrayList<>();
+            while (rsShifts.next()) {
+                Map<String, Object> shift = new HashMap<>();
+                shift.put("shift_id", rsShifts.getInt("shift_id"));
+                shift.put("date", rsShifts.getString("date"));
+                shift.put("shift_timetable", rsShifts.getString("shift_timetable"));
+                confirmedShifts.add(shift);
             }
-			
-			/* ② TimeSlot 一覧 */
-            String sqlSlot = "SELECT * FROM timeslot ORDER BY start_minute";
-            PreparedStatement psSlot = con.prepareStatement(sqlSlot);
-            ResultSet rsSlot = psSlot.executeQuery();
+            System.out.println("confirmedShifts size: " + confirmedShifts.size()); // デバッグ
 
-            List<Map<String, Object>> timeSlots = new ArrayList<>();
-            while (rsSlot.next()) {
-                Map<String, Object> slot = new HashMap<>();
-                slot.put("id", rsSlot.getInt("id"));
-                slot.put("name", rsSlot.getString("name"));
-                slot.put("start", rsSlot.getInt("start_minute"));
-                slot.put("end", rsSlot.getInt("end_minute"));
-                timeSlots.add(slot);
-            }
-
-            // ② 自分の募集履歴
+            // 自分の募集履歴
             String sqlHelp = """
-                SELECT help_want_day, help_want_time_start, help_want_time_end,
-                       help_reason, apply
-                FROM help
-                WHERE help_want_userID = ?
-                ORDER BY helpID DESC
+                SELECT h.apply, h.help_reason, h.help_want_day, h.help_want_time_start, h.help_want_time_end, h.helper_userID AS helper_id
+                FROM help h
+                WHERE h.help_want_userID = ?
+                ORDER BY h.helpID DESC
             """;
             PreparedStatement psHelp = con.prepareStatement(sqlHelp);
             psHelp.setString(1, userId);
@@ -82,18 +62,37 @@ public class HelpRequestServlet extends HttpServlet {
             while (rsHelp.next()) {
                 Map<String, String> h = new HashMap<>();
                 h.put("date", rsHelp.getString("help_want_day"));
-                h.put("time",
-                        rsHelp.getString("help_want_time_start")
-                        + "〜"
-                        + rsHelp.getString("help_want_time_end"));
+                java.sql.Time startTime = rsHelp.getTime("help_want_time_start");
+                java.sql.Time endTime = rsHelp.getTime("help_want_time_end");
+                String timeStr = String.format("%02d:%02d-%02d:%02d",
+                    startTime.getHours(), startTime.getMinutes(),
+                    endTime.getHours(), endTime.getMinutes());
+                h.put("time", timeStr);
                 h.put("reason", rsHelp.getString("help_reason"));
                 h.put("status", rsHelp.getString("apply"));
+                h.put("helper_id", rsHelp.getString("helper_id"));
                 helpList.add(h);
             }
 
-            request.setAttribute("shiftDates", shiftDates);
-			request.setAttribute("timeSlots", timeSlots);
+            request.setAttribute("confirmedShifts", confirmedShifts);
             request.setAttribute("helpList", helpList);
+
+            // 自分のシフトで使用されているtimeslotのname一覧（重複除去）
+            String sqlTypes = """
+                SELECT DISTINCT t.name,t.start_minute
+                FROM shift s
+                JOIN timeslot t ON s.start_minute = t.start_minute AND s.end_minute = t.end_minute
+                WHERE s.workerID = ?
+                ORDER BY t.start_minute
+            """;
+            PreparedStatement psTypes = con.prepareStatement(sqlTypes);
+            psTypes.setString(1, userId);
+            ResultSet rsTypes = psTypes.executeQuery();
+            List<String> shiftTypes = new ArrayList<>();
+            while (rsTypes.next()) {
+                shiftTypes.add(rsTypes.getString("name"));
+            }
+            request.setAttribute("shiftTypes", shiftTypes);
 
         } catch (Exception e) {
             throw new ServletException(e);
@@ -104,55 +103,53 @@ public class HelpRequestServlet extends HttpServlet {
         dispatcher.forward(request, response);
     }
 
-    // =========================
-    // POST：募集登録
-    // =========================
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
         request.setCharacterEncoding("UTF-8");
 
-        String helpDate = request.getParameter("help_date");
-        int shiftId = Integer.parseInt(request.getParameter("shift_id"));
-        String reason = request.getParameter("help_reason");
+        HttpSession session = request.getSession(false);
+        String userId = (String) session.getAttribute("userID");
 
-        String userId = "USER_KOSHIRO"; // session想定
+        String shiftIdStr = request.getParameter("shift_id");
+        if (shiftIdStr == null || shiftIdStr.isEmpty()) {
+            throw new ServletException("シフトを選択してください");
+        }
+        int shiftId = Integer.parseInt(shiftIdStr);
+        String reason = request.getParameter("help_reason");
 
         try (Connection con = DBconfig.getConnection()) {
 
-            /* TimeSlot → 時刻変換 */
-            String sqlSlot = "SELECT startminute, endminute FROM timeslot WHERE id = ?";
-            PreparedStatement psSlot = con.prepareStatement(sqlSlot);
-            psSlot.setInt(1, shiftId);
-            ResultSet rs = psSlot.executeQuery();
-
+            // shift_idから日付と時間を取得
+            String sqlGetShift = "SELECT date, start_minute, end_minute FROM shift WHERE id = ?";
+            PreparedStatement psGet = con.prepareStatement(sqlGetShift);
+            psGet.setInt(1, shiftId);
+            ResultSet rs = psGet.executeQuery();
             if (!rs.next()) {
-                throw new ServletException("TimeSlot not found");
+                throw new ServletException("シフトが見つかりません");
             }
+            String helpDay = rs.getString("date");
+            int startMinute = rs.getInt("start_minute");
+            int endMinute = rs.getInt("end_minute");
 
-            int startMin = rs.getInt("start_minute");
-            int endMin = rs.getInt("end_minute");
+            // ヘルプ募集を一時保存する
+            String sqlInsert = "INSERT INTO help (help_want_userID, help_reason, help_want_day, help_want_time_start, help_want_time_end, apply) "
+                    + "VALUES (?, ?, ?, ?, ?, 0)";
+            PreparedStatement psInsert = con.prepareStatement(sqlInsert);
 
-            String startTime = String.format("%02d:%02d", startMin / 60, startMin % 60);
-            String endTime = String.format("%02d:%02d", endMin / 60, endMin % 60);
+            psInsert.setString(1, userId);
+            psInsert.setString(2, reason);
+            psInsert.setString(3, helpDay);
+            
+            // 分をTimeに変換
+            java.sql.Time helpTimeStart = java.sql.Time.valueOf(String.format("%02d:%02d:00", startMinute / 60, startMinute % 60));
+            java.sql.Time helpTimeEnd = java.sql.Time.valueOf(String.format("%02d:%02d:00", endMinute / 60, endMinute % 60));
+            
+            psInsert.setTime(4, helpTimeStart);
+            psInsert.setTime(5, helpTimeEnd);
 
-            /* help テーブルへ保存 */
-            String sql = """
-                INSERT INTO help
-                (help_want_userID, help_want_day,
-                 help_want_time_start, help_want_time_end,
-                 help_reason, apply)
-                VALUES (?, ?, ?, ?, ?, 0)
-            """;
-
-            PreparedStatement ps = con.prepareStatement(sql);
-            ps.setString(1, userId);
-            ps.setString(2, helpDate);
-            ps.setString(3, startTime);
-            ps.setString(4, endTime);
-            ps.setString(5, reason);
-            ps.executeUpdate();
+            psInsert.executeUpdate();
 
         } catch (Exception e) {
             throw new ServletException(e);
@@ -161,6 +158,7 @@ public class HelpRequestServlet extends HttpServlet {
         // 二重送信防止（PRGパターン）
         response.sendRedirect(request.getContextPath() + "/HelpRequestServlet");
     }
+
 }
 
 /**処理の大まかな流れ

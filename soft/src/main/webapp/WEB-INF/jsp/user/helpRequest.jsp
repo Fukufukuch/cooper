@@ -32,39 +32,26 @@
         <form action="<%= request.getContextPath() %>/HelpRequestServlet" method="post">
 
           <div class="form-group">
-            <label>代わってほしい日付</label>
-            <select name="help_date" required>
-              <option value="" disabled selected>日付を選択</option>
-              <%
-                List<String> shiftDates = (List<String>) request.getAttribute("shiftDates");
-                if (shiftDates != null) {
-                  for (String d : shiftDates) {
-              %>
-                <option value="<%= d %>"><%= d %></option>
-              <%
-                  }
-                }
-              %>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label>シフト区分</label>
-            <select name="timeslot_id" required>
-              <option value="" disabled selected>区分を選択</option>
-              <%
-                List<Map<String, Object>> timeSlots =
-                  (List<Map<String, Object>>) request.getAttribute("timeSlots");
-                if (timeSlots != null) {
-                  for (Map<String, Object> slot : timeSlots) {
-              %>
-                <option value="<%= slot.get("id") %>">
-                  <%= slot.get("name") %>
-                </option>
-              <%
-                  }
-                }
-              %>
+            <label>代わってほしいシフト</label>
+            <select name="shift_id" class="form-select" required>
+                <option value="" disabled selected>シフトを選択</option>
+                <%
+                    List<Map<String, Object>> confirmedShifts =
+                    (List<Map<String, Object>>) request.getAttribute("confirmedShifts");
+                    if (confirmedShifts != null && !confirmedShifts.isEmpty()) {
+                    for (Map<String, Object> s : confirmedShifts) {
+                %>
+                    <option value="<%= s.get("shift_id") %>">
+                    <%= s.get("date") %> (<%= s.get("shift_timetable") %>)
+                    </option>
+                <%
+                    }
+                    } else {
+                %>
+                    <option disabled>シフトがありません</option>
+                <%
+                    }
+                %>
             </select>
           </div>
 

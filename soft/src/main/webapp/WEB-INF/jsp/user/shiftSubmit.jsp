@@ -38,13 +38,10 @@
         </div>
 
         <div class="form-group">
-            <label for="startTime">開始時刻</label>
-            <input type="time" id="startTime">
-        </div>
-
-        <div class="form-group">
-            <label for="endTime">終了時刻</label>
-            <input type="time" id="endTime">
+            <label for="timeSlot">シフト区分</label>
+            <select id="timeSlot">
+                <option value="">選択してください</option>
+            </select>
         </div>
 
         <button type="button" class="btn add-btn" onclick="addShift()">
@@ -72,117 +69,90 @@
 
 <!-- ===== JavaScript ===== -->
 <script>
-    let shiftRequests = [];
+document.addEventListener("DOMContentLoaded", () => {
 
+    // ===== 状態（1回だけ作る）=====
+    let shiftRequests = [];
+    let timeslots = [];
+
+    // ===== DOM =====
     const dateInput = document.getElementById("shiftDate");
-    const allDayCheckbox = document.getElementById("allDay");
-    const startTimeInput = document.getElementById("startTime");
-    const endTimeInput = document.getElementById("endTime");
+    const timeSlotSelect = document.getElementById("timeSlot");
     const shiftList = document.getElementById("shiftList");
     const countSpan = document.getElementById("count");
 
-    allDayCheckbox.addEventListener("change", () => {
-        const disabled = allDayCheckbox.checked;
-        startTimeInput.disabled = disabled;
-        endTimeInput.disabled = disabled;
-        if (disabled) {
-            startTimeInput.value = "";
-            endTimeInput.value = "";
-        }
-    });
-
-    function addShift() {
-        const date = dateInput.value;
-        const allDay = allDayCheckbox.checked;
-        const startTime = startTimeInput.value;
-        const endTime = endTimeInput.value;
-
-        if (!date) {
-            alert("日付を選択してください");
-            return;
-        }
-
-        if (!allDay && (!startTime || !endTime)) {
-            alert("開始・終了時刻を入力してください");
-            return;
-        }
-
-        shiftRequests.push({
-            date,
-            startTime: allDay ? null : startTime,
-            endTime: allDay ? null : endTime,
-            allDay
+    // ===== timeslot 読み込み =====
+    fetch("<%= request.getContextPath() %>/user/shift/submit/api")
+        .then(res => res.json())
+        .then(data => {
+            timeslots = data;
+            data.forEach(t => {
+                const opt = document.createElement("option");
+                opt.value = t.id;
+                opt.textContent = t.name;
+                timeSlotSelect.appendChild(opt);
+            });
         });
 
-        clearForm();
-        renderShiftList();
+    // ===== 追加ボタン =====
+    window.addShift = function () {
+
+        const date = dateInput.value;
+    const timeSlotId = timeSlotSelect.value;
+    const timeSlotName =
+        timeSlotSelect.options[timeSlotSelect.selectedIndex].text;
+
+    // ★ ここでログを出す
+    console.log("date:", date);
+    console.log("timeSlotId:", timeSlotId);
+    console.log("timeSlotName:", timeSlotName);
+
+    if (!date) {
+        alert("日付を選択してください");
+        return;
+    }
+    if (!timeSlotId) {
+        alert("シフト区分を選択してください");
+        return;
     }
 
-    function clearForm() {
-        dateInput.value = "";
-        allDayCheckbox.checked = false;
-        startTimeInput.disabled = false;
-        endTimeInput.disabled = false;
-        startTimeInput.value = "";
-        endTimeInput.value = "";
-    }
+    shiftRequests.push({
+        helpDay: date,
+        timeSlotName: timeSlotName
+    });
 
+    renderShiftList();
+
+    };
+
+    // ===== 表示 =====
     function renderShiftList() {
         shiftList.innerHTML = "";
 
         if (shiftRequests.length === 0) {
-            shiftList.innerHTML = "<p class='empty'>シフト希望がありません</p>";
+            shiftList.innerHTML = "<p>シフト希望がありません</p>";
             countSpan.textContent = "0件";
             return;
         }
 
-        shiftRequests.forEach((shift, index) => {
-            const card = document.createElement("div");
-            card.className = "shift-card";
-
-            const timeText = shift.allDay
-                ? "終日勤務可能"
-                : shift.startTime + " 〜 " + shift.endTime;
-
-            card.innerHTML =
-                '<div class="shift-info">' +
-                '<div class="shift-date">📅 ' + shift.date + '</div>' +
-                '<div class="shift-time">⏰ ' + timeText + '</div>' +
-                '</div>' +
-                '<button class="delete-btn" onclick="removeShift(' + index + ')">🗑</button>';
-
-            shiftList.appendChild(card);
+        shiftRequests.forEach(s => {
+            console.log("s.helpDay:", s.helpDay);
+            console.log("s.timeSlotName:", s.timeSlotName);
+            const div = document.createElement("div");
+            div.innerHTML = `
+                <div>📅`+ s.helpDay + `</div>
+                <div>⏰`+ s.timeSlotName + `</div>
+            `;
+            shiftList.appendChild(div);
         });
 
         countSpan.textContent = shiftRequests.length + "件";
+        
     }
 
-    function removeShift(index) {
-        shiftRequests.splice(index, 1);
-        renderShiftList();
-    }
-
-    function submitShifts() {
-      fetch("<%= request.getContextPath() %>/user/shift/submit/api", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(shiftRequests)
-      })
-      .then(res => {
-        if (!res.ok) throw new Error("HTTP error " + res.status);
-        return res.json();
-      })
-      .then(data => {
-        alert("提出完了！");
-      })
-      .catch(err => {
-        console.error(err);
-        alert("送信に失敗しました");
-      });
-    }
+});
 </script>
+
 
 </body>
 </html>

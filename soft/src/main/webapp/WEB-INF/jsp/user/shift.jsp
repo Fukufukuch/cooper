@@ -9,7 +9,7 @@
         .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .form-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input[type="date"], input[type="time"] { width: 100%; padding: 8px; box-sizing: border-box; }
+        input[type="date"], input[type="time"], select { width: 100%; padding: 8px; box-sizing: border-box; }
         .checkbox-group { display: flex; align-items: center; gap: 10px; }
         button { cursor: pointer; padding: 10px 15px; border: none; border-radius: 4px; }
         .add-btn { background-color: #28a745; color: white; width: 100%; font-size: 16px; }
@@ -30,6 +30,13 @@
     <div class="form-group">
         <label for="shiftDate">日付</label>
         <input type="date" id="shiftDate">
+    </div>
+
+    <div class="form-group">
+        <label for="timeSlot">シフト区分</label>
+        <select id="timeSlot">
+            <option value="">選択してください</option>
+        </select>
     </div>
 
     <div class="form-group checkbox-group">
@@ -57,15 +64,37 @@
 </div>
 
 <script>
-    // いただいたJSのロジックを統合
     let shiftRequests = [];
 
     const dateInput = document.getElementById("shiftDate");
+    const timeSlotSelect = document.getElementById("timeSlot");
     const allDayCheckbox = document.getElementById("allDay");
     const startTimeInput = document.getElementById("startTime");
     const endTimeInput = document.getElementById("endTime");
     const shiftList = document.getElementById("shiftList");
     const countSpan = document.getElementById("count");
+
+    // ページロード時にtimeslotをロード
+    window.addEventListener("load", loadTimeslots);
+
+    function loadTimeslots() {
+        console.log("loadTimeslots called");
+        fetch("<%= request.getContextPath() %>/user/shift/submit/api")
+            .then(res => {
+                console.log("response status:", res.status);
+                return res.json();
+            })
+            .then(timeslots => {
+                console.log("timeslots:", timeslots);
+                timeslots.forEach(timeslot => {
+                    const option = document.createElement("option");
+                    option.value = timeslot.id;
+                    option.textContent = timeslot.name;
+                    timeSlotSelect.appendChild(option);
+                });
+            })
+            .catch(err => console.error("timeslot load error:", err));
+    }
 
     // 終日チェック時の制御
     allDayCheckbox.addEventListener("change", () => {
@@ -81,6 +110,9 @@
     // リストへの追加
     function addShift() {
         const date = dateInput.value;
+        const timeSlotId = timeSlotSelect.value;
+        const timeSlotName =
+        timeSlotSelect.options[timeSlotSelect.selectedIndex].text;
         const allDay = allDayCheckbox.checked;
         const startTime = startTimeInput.value;
         const endTime = endTimeInput.value;
@@ -90,16 +122,21 @@
             return;
         }
 
+        if (!timeSlotId) {
+            alert("シフト区分を選択してください");
+            return;
+        }
+
         if (!allDay && (!startTime || !endTime)) {
             alert("開始・終了時刻を入力してください");
             return;
         }
 
         shiftRequests.push({
-            date,
-            startTime: allDay ? null : startTime,
-            endTime: allDay ? null : endTime,
-            allDay
+            timeSlotId: parseInt(timeSlotId),
+            timeSlotName: timeSlotName,         // 表示用
+            helpDay: date,
+            reason: "希望"
         });
 
         clearForm();
@@ -108,6 +145,7 @@
 
     function clearForm() {
         dateInput.value = "";
+        timeSlotSelect.value = "";
         allDayCheckbox.checked = false;
         startTimeInput.disabled = false;
         endTimeInput.disabled = false;
@@ -129,22 +167,18 @@
             const card = document.createElement("div");
             card.className = "shift-card";
 
-            const timeText = shift.allDay
-                ? "終日勤務可能"
-                : `\${shift.startTime} 〜 \${shift.endTime}`; // JSPでのエスケープ
-
             card.innerHTML = `
                 <div class="shift-info">
-                    <div class="shift-date">📅 \${shift.date}</div>
-                    <div class="shift-time">⏰ \${timeText}</div>
+                    <div class="shift-date">📅 ${shift.helpDay}</div>
+                    <div class="shift-timeslot">⏰ ${shift.timeSlotName}</div>
                 </div>
-                <button class="delete-btn" onclick="removeShift(\${index})">🗑</button>
+                <button class="delete-btn" onclick="removeShift(${index})">🗑</button>
             `;
 
             shiftList.appendChild(card);
         });
 
-        countSpan.textContent = `\${shiftRequests.length}件`;
+        countSpan.textContent = `${shiftRequests.length}件`;
     }
 
     function removeShift(index) {
@@ -152,16 +186,34 @@
         renderShiftList();
     }
 
-    // サーバーへの送信（例）
+    // サーバーへの送信
     function submitShifts() {
         if (shiftRequests.length === 0) {
             alert("提出するシフト希望がありません");
             return;
         }
 
-        // 実際にはFetch APIなどでJavaのServletにJSONを投げるのが一般的です
-        console.log("送信データ:", JSON.stringify(shiftRequests));
-        alert(shiftRequests.length + "件のシフトを送信しました（モック）");
+        fetch("<%= request.getContextPath() %>/user/shift/submit/api", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(shiftRequests)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === "success") {
+                alert("提出完了！");
+                shiftRequests = [];
+                renderShiftList();
+            } else {
+                alert("エラー: " + data.status);
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert("送信に失敗しました");
+        });
     }
 </script>
 

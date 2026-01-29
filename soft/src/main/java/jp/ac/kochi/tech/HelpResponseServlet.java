@@ -6,6 +6,7 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -20,46 +21,63 @@ public class HelpResponseServlet extends HttpServlet {
     /**
      * 募集中のヘルプ一覧を表示
      */
-    @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
 
-        List<Map<String, String>> helpList = new ArrayList<>();
+
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) 
+            throws ServletException, IOException {
+        
+        HttpSession session = request.getSession(false);
+        String userId = (String) session.getAttribute("userID");
+        System.out.println("userID in HelpResponse: " + userId); // デバッグ
 
         try (Connection con = DBconfig.getConnection()) {
 
-            String sql = """
-                SELECT helpID, help_want_userID,
-                       help_want_day,
-                       help_want_time_start, help_want_time_end,
-                       help_reason, apply
-                FROM help
-                WHERE apply = 0
-                ORDER BY helpID DESC
-            """;
-
-            PreparedStatement ps = con.prepareStatement(sql);
-            ResultSet rs = ps.executeQuery();
-
-            while (rs.next()) {
-                Map<String, String> h = new HashMap<>();
-                h.put("id", rs.getString("helpID"));
-                h.put("userId", rs.getString("help_want_userID"));
-                h.put("date", rs.getString("help_want_day"));
-                h.put("time",
-                        rs.getString("help_want_time_start")
-                        + "〜"
-                        + rs.getString("help_want_time_end"));
-                h.put("reason", rs.getString("help_reason"));
-                h.put("status", rs.getString("apply"));
-                helpList.add(h);
+            // 募集中のヘルプ一覧（自分のもの以外）
+            String sqlHelp;
+            PreparedStatement psHelp;
+            if (userId == null) {
+                sqlHelp = """
+                    SELECT h.helpID, h.help_want_day, h.help_want_time_start, h.help_want_time_end, h.help_reason
+                    FROM help h
+                    WHERE h.apply = 0 AND h.helper_userID IS NULL
+                    ORDER BY h.helpID DESC
+                """;
+                psHelp = con.prepareStatement(sqlHelp);
+            } else {
+                sqlHelp = """
+                    SELECT h.helpID, h.help_want_day, h.help_want_time_start, h.help_want_time_end, h.help_reason
+                    FROM help h
+                    WHERE h.apply = 0 AND h.helper_userID IS NULL AND h.help_want_userID != ?
+                    ORDER BY h.helpID DESC
+                """;
+                psHelp = con.prepareStatement(sqlHelp);
+                psHelp.setString(1, userId);
             }
+            ResultSet rsHelp = psHelp.executeQuery();
+
+            List<Map<String, String>> availableHelps = new ArrayList<>();
+            while (rsHelp.next()) {
+                Map<String, String> h = new HashMap<>();
+                h.put("helpID", rsHelp.getString("helpID"));
+                h.put("date", rsHelp.getString("help_want_day"));
+                java.sql.Time startTime = rsHelp.getTime("help_want_time_start");
+                java.sql.Time endTime = rsHelp.getTime("help_want_time_end");
+                String timeStr = String.format("%02d:%02d-%02d:%02d",
+                    startTime.getHours(), startTime.getMinutes(),
+                    endTime.getHours(), endTime.getMinutes());
+                h.put("time", timeStr);
+                h.put("reason", rsHelp.getString("help_reason"));
+                availableHelps.add(h);
+            }
+            System.out.println("availableHelps size: " + availableHelps.size()); // デバッグ
+
+            request.setAttribute("availableHelps", availableHelps);
 
         } catch (Exception e) {
             throw new ServletException(e);
         }
 
-        request.setAttribute("helpList", helpList);
         RequestDispatcher dispatcher =
                 request.getRequestDispatcher("/WEB-INF/jsp/user/helpResponse.jsp");
         dispatcher.forward(request, response);
@@ -74,20 +92,22 @@ public class HelpResponseServlet extends HttpServlet {
 
         request.setCharacterEncoding("UTF-8");
 
-        int helpId = Integer.parseInt(request.getParameter("help_id"));
-        String helperId = "USER_HELPER"; // 本来は session
+        HttpSession session = request.getSession(false);
+        if (session == null || session.getAttribute("userID") == null) {
+            response.sendRedirect(request.getContextPath() + "/LoginServlet");
+            return;
+        }
+        String userId = (String) session.getAttribute("userID");
+
+        String helpId = request.getParameter("help_id");
 
         try (Connection con = DBconfig.getConnection()) {
 
-            String sql = """
-                UPDATE help
-                SET helper_userID = ?, apply = 1
-                WHERE helpID = ? AND apply = 0
-            """;
-
-            PreparedStatement ps = con.prepareStatement(sql);
-            ps.setString(1, helperId);
-            ps.setInt(2, helpId);
+            // ヘルプに応募（helper_userIDを更新）
+            String sqlUpdate = "UPDATE help SET helper_userID = ?, apply = 1 WHERE helpID = ?";
+            PreparedStatement ps = con.prepareStatement(sqlUpdate);
+            ps.setString(1, userId);
+            ps.setString(2, helpId);
             ps.executeUpdate();
 
         } catch (Exception e) {
@@ -96,9 +116,8 @@ public class HelpResponseServlet extends HttpServlet {
 
         response.sendRedirect(request.getContextPath() + "/HelpResponseServlet");
     }
+
 }
-
-
 /**処理の大まかな流れ
  * 1 helpResponse.jsp を表示
  * 
