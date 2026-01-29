@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 
 @WebServlet("/owner/shift/add")
 public class OwnerShiftAddServlet extends HttpServlet {
@@ -27,18 +28,35 @@ public class OwnerShiftAddServlet extends HttpServlet {
             return;
         }
 
-        try {
-            String dateStr = req.getParameter("date");
-            String userID = req.getParameter("userID");
-            int positionID = Integer.parseInt(req.getParameter("positionID"));
-            int timeslotID = Integer.parseInt(req.getParameter("timeslotID"));
+        req.setCharacterEncoding("UTF-8");
 
-            LocalDate day = LocalDate.parse(dateStr);
+        String userID = req.getParameter("userID");
+        String dayStr = req.getParameter("day");
+        String timetable = req.getParameter("timetable");
+        String timetableNumberStr = req.getParameter("timetableNumber");
+
+        String year = req.getParameter("year");
+        String month = req.getParameter("month");
+
+        try {
+            LocalDate day = LocalDate.parse(dayStr);
+
+            Integer timetableNumber = null;
+            if (timetableNumberStr != null && !timetableNumberStr.isBlank()) {
+                timetableNumber = Integer.parseInt(timetableNumberStr);
+            }
 
             ShiftDao dao = new ShiftDao();
-            dao.insert(day, userID, positionID, timeslotID);
+            dao.insert(userID, day, timetable, timetableNumber);
 
-            resp.sendRedirect(req.getContextPath() + "/owner/shift/edit");
+            String redirect = req.getContextPath() + "/owner/shift/edit";
+            if (year != null && month != null && !year.isBlank() && !month.isBlank()) {
+                redirect += "?year=" + year + "&month=" + month;
+            }
+            resp.sendRedirect(redirect);
+
+        } catch (DateTimeParseException e) {
+            throw new ServletException("日付形式が不正です。例: 2026-01-09 の形式で入力してください。", e);
 
         } catch (Exception e) {
             throw new ServletException(e);
