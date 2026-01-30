@@ -472,6 +472,15 @@ public boolean updateUser(
         return ps.executeUpdate() == 1;
     }
 }
+public boolean resetPassword(String userID, String newPassword) throws SQLException {
+    String sql = "UPDATE users SET password = ? WHERE userID = ?";
+    try (Connection con = Db.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql)) {
+        ps.setString(1, newPassword);
+        ps.setString(2, userID);
+        return ps.executeUpdate() == 1;
+    }
+}
 
     
 }

@@ -23,7 +23,7 @@
 
   <div class="card" style="margin-top:14px;">
     <div class="section-title">承認待ち一覧</div>
-    <p class="section-desc">help(apply=1) を表示（承認/却下で状態更新）</p>
+    
 
     <% if (rows == null || rows.isEmpty()) { %>
       <div class="note">承認待ちはありません。</div>

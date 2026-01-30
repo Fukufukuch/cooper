@@ -2,6 +2,8 @@
 <%
   request.setAttribute("activeTab", "people");
   String userID = (String) request.getAttribute("userID");
+  String initialPassword = (String) request.getAttribute("initialPassword");
+
 %>
 
 <!DOCTYPE html>
@@ -27,6 +29,9 @@
         <br>対象ユーザーID：<strong><%= userID %></strong>
       <% } %>
     </div>
+<% if (initialPassword != null && !initialPassword.isBlank()) { %>
+  <br>初期パス：<strong><%= initialPassword %></strong>
+<% } %>
 
     <div style="margin-top:12px;">
       <a class="btn" href="<%= request.getContextPath() %>/owner/people">スタッフ一覧へ</a>

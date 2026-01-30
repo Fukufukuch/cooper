@@ -84,6 +84,16 @@
         <label>勤務地</label>
         <input class="input" type="text" name="work_place" value="<%= workPlace %>" required>
       </div>
+<div class="form-row">
+  <label>パスワード初期化</label>
+  <label style="display:flex; gap:8px; align-items:center;">
+    <input type="checkbox" name="reset_password" value="1">
+    生年月日（YYYYMMDD）に戻す
+  </label>
+  <div class="note" style="margin-top:6px;">
+    ※チェックして更新すると、パスワードが生年月日(YYYYMMDD)になります。
+  </div>
+</div>
 
       <div class="form-actions">
         <button class="btn" type="submit">更新</button>

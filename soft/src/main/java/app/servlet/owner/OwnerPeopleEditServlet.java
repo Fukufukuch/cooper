@@ -18,7 +18,7 @@ public class OwnerPeopleEditServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
-        
+
         jakarta.servlet.http.HttpSession session = req.getSession(false);
         if (session == null || session.getAttribute("userID") == null) {
             resp.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
@@ -37,22 +37,20 @@ public class OwnerPeopleEditServlet extends HttpServlet {
 
         try {
             UserDao dao = new UserDao();
-
-            // ✅ 管理者・スタッフどちらも取得
             User u = dao.findUserById(userID);
 
             if (u == null) {
                 req.setAttribute("error", "対象ユーザーが見つかりません。");
                 req.setAttribute("activeTab", "people");
                 req.getRequestDispatcher("/WEB-INF/jsp/owner/people_edit.jsp")
-                   .forward(req, resp);
+                        .forward(req, resp);
                 return;
             }
 
             req.setAttribute("user", u);
             req.setAttribute("activeTab", "people");
             req.getRequestDispatcher("/WEB-INF/jsp/owner/people_edit.jsp")
-               .forward(req, resp);
+                    .forward(req, resp);
 
         } catch (Exception e) {
             throw new ServletException(e);
@@ -62,7 +60,7 @@ public class OwnerPeopleEditServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
-        
+
         jakarta.servlet.http.HttpSession session = req.getSession(false);
         if (session == null || session.getAttribute("userID") == null) {
             resp.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
@@ -74,6 +72,9 @@ public class OwnerPeopleEditServlet extends HttpServlet {
 
         req.setCharacterEncoding("UTF-8");
 
+        // --------------------
+        // パラメータ取得
+        // --------------------
         String userID = req.getParameter("userID");
         String username = req.getParameter("username");
         String email = req.getParameter("email");
@@ -82,6 +83,10 @@ public class OwnerPeopleEditServlet extends HttpServlet {
         String tagStr = req.getParameter("tag");
         String posStr = req.getParameter("position");
         String workPlace = req.getParameter("work_place");
+
+        // ★ パスワード初期化チェック
+        String resetPass = req.getParameter("reset_password");
+        boolean doReset = "1".equals(resetPass);
 
         // --------------------
         // 入力チェック
@@ -108,7 +113,7 @@ public class OwnerPeopleEditServlet extends HttpServlet {
             req.setAttribute("user", back);
             req.setAttribute("activeTab", "people");
             req.getRequestDispatcher("/WEB-INF/jsp/owner/people_edit.jsp")
-               .forward(req, resp);
+                    .forward(req, resp);
             return;
         }
 
@@ -122,7 +127,7 @@ public class OwnerPeopleEditServlet extends HttpServlet {
             req.setAttribute("error", "生年月日の形式が不正です。");
             req.setAttribute("activeTab", "people");
             req.getRequestDispatcher("/WEB-INF/jsp/owner/people_edit.jsp")
-               .forward(req, resp);
+                    .forward(req, resp);
             return;
         }
 
@@ -132,7 +137,9 @@ public class OwnerPeopleEditServlet extends HttpServlet {
         try {
             UserDao dao = new UserDao();
 
-            // ✅ 管理者・スタッフ共通更新
+            // --------------------
+            // 基本情報更新
+            // --------------------
             boolean ok = dao.updateUser(
                     userID,
                     username,
@@ -149,13 +156,37 @@ public class OwnerPeopleEditServlet extends HttpServlet {
                 User u = dao.findUserById(userID);
                 req.setAttribute("user", u);
                 req.getRequestDispatcher("/WEB-INF/jsp/owner/people_edit.jsp")
-                   .forward(req, resp);
+                        .forward(req, resp);
                 return;
             }
 
+            // --------------------
+            // パスワード初期化（生年月日）
+            // --------------------
+            String initialPassword = null;
+
+            if (doReset) {
+                // YYYY-MM-DD → YYYYMMDD
+                initialPassword = dobStr.replace("-", "");
+
+                boolean okPass = dao.resetPassword(userID, initialPassword);
+                if (!okPass) {
+                    req.setAttribute("error", "ユーザー情報は更新されましたが、パスワード初期化に失敗しました。");
+                    User u = dao.findUserById(userID);
+                    req.setAttribute("user", u);
+                    req.getRequestDispatcher("/WEB-INF/jsp/owner/people_edit.jsp")
+                            .forward(req, resp);
+                    return;
+                }
+            }
+
+            // --------------------
+            // 完了画面へ
+            // --------------------
             req.setAttribute("userID", userID);
+            req.setAttribute("initialPassword", initialPassword);
             req.getRequestDispatcher("/WEB-INF/jsp/owner/people_edit_done.jsp")
-               .forward(req, resp);
+                    .forward(req, resp);
 
         } catch (Exception e) {
             throw new ServletException(e);
