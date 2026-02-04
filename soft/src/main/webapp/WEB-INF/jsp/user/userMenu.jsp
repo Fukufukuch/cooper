@@ -14,7 +14,7 @@
     <body>
         <div class="container">
             <div class="h1">オートシフタ</div>
-            <div class="sub">設定</div>
+            
 
             <%@ include file="/WEB-INF/jsp/common/user_tabs.jspf" %>
 

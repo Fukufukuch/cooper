@@ -1,52 +1,4 @@
-body {
-    font-family: "Segoe UI", sans-serif;
-    background: #f4f6ff;
-    margin: 0;
-    padding: 20px;
-}
-
-.container {
-    background: #ffffff;
-    border-radius: 12px;
-    padding: 20px;
-}
-
-.header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    border-bottom: 2px solid #0066cc;
-    padding-bottom: 10px;
-    flex-wrap: wrap;
-    gap: 20px;
-}
-
-.header-left {
-    display: flex;
-    flex-direction: column;
-}
-
-.header h1 {
-    margin: 0;
-    color: #0066cc;
-    font-size: 24px;
-}
-
-.header .user-info {
-    font-size: 14px;
-    color: #666;
-}
-
-.header .user-info strong {
-    color: #0066cc;
-}
-
-h2 {
-    margin-top: 10px;
-    margin-bottom: 20px;
-    color: #555;
-}
+/* カレンダー専用スタイル */
 
 .month-nav {
     display: flex;
@@ -72,7 +24,7 @@ h2 {
 .calendar th {
     text-align: center;
     color: #555;
-    font-weight: bold;
+    font-weight: 600;
     padding: 10px 0;
 }
 
@@ -94,7 +46,7 @@ h2 {
 }
 
 .date {
-    font-weight: bold;
+    font-weight: 600;
     margin-bottom: 4px;
 }
 

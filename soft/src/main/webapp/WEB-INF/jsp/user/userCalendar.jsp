@@ -31,7 +31,6 @@ request.setAttribute("activeTab", "calendar");
 
 <div class="container">
   <div class="h1">オートシフタ</div>
-  <div class="sub">カレンダー</div>
 
   <%@ include file="/WEB-INF/jsp/common/user_tabs.jspf" %>
 

@@ -15,7 +15,7 @@
 <div class="container">
 
   <!-- ===== タイトル ===== -->
-  <div class="h1">シフト自動生成システム</div>
+  <div class="h1">オートシフタ</div>
 
   <!-- ===== 共通タブ ===== -->
   <%@ include file="/WEB-INF/jsp/common/user_tabs.jspf" %>
