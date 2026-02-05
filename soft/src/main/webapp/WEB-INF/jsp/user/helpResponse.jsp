@@ -104,9 +104,9 @@
        <div class="reason-box mb-3">
         <small class="text-secondary fw-bold">理由:</small> <%= help.get("reason") %>
        </div>
-       <div class="text-end mb-3">
-        <small class="text-muted">👤 依頼者: <%= help.get("userId") %></small>
-       </div>
+    <div class="text-end mb-3">
+     <small class="text-muted">👤 依頼者: <%= help.get("username") %></small>
+    </div>
       </div>
       
       <div class="card-footer bg-white border-0 pb-3">
