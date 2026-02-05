@@ -38,16 +38,20 @@ public class HelpResponseServlet extends HttpServlet {
             PreparedStatement psHelp;
             if (userId == null) {
                 sqlHelp = """
-                    SELECT h.helpID, h.help_want_day, h.help_want_time_start, h.help_want_time_end, h.help_reason
+                    SELECT h.helpID, h.help_want_userID, u.username,
+                           h.help_want_day, h.help_want_time_start, h.help_want_time_end, h.help_reason
                     FROM help h
+                    JOIN users u ON u.userID = h.help_want_userID
                     WHERE h.apply = 0 AND h.helper_userID IS NULL
                     ORDER BY h.helpID DESC
                 """;
                 psHelp = con.prepareStatement(sqlHelp);
             } else {
                 sqlHelp = """
-                    SELECT h.helpID, h.help_want_day, h.help_want_time_start, h.help_want_time_end, h.help_reason
+                    SELECT h.helpID, h.help_want_userID, u.username,
+                           h.help_want_day, h.help_want_time_start, h.help_want_time_end, h.help_reason
                     FROM help h
+                    JOIN users u ON u.userID = h.help_want_userID
                     WHERE h.apply = 0 AND h.helper_userID IS NULL AND h.help_want_userID != ?
                     ORDER BY h.helpID DESC
                 """;
@@ -60,6 +64,8 @@ public class HelpResponseServlet extends HttpServlet {
             while (rsHelp.next()) {
                 Map<String, String> h = new HashMap<>();
                 h.put("helpID", rsHelp.getString("helpID"));
+                h.put("userId", rsHelp.getString("help_want_userID"));
+                h.put("username", rsHelp.getString("username"));
                 h.put("date", rsHelp.getString("help_want_day"));
                 java.sql.Time startTime = rsHelp.getTime("help_want_time_start");
                 java.sql.Time endTime = rsHelp.getTime("help_want_time_end");
