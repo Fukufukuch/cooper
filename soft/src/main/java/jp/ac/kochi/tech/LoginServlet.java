@@ -57,6 +57,7 @@ public class LoginServlet extends HttpServlet {
 		} else {
 			// ログイン失敗 → ログイン画面へ遷移
 			System.out.println("ログイン失敗");
+			request.setAttribute("errorMessage", "ユーザーIDまたはパスワードが間違っています");
 			RequestDispatcher dispatcher =
 					request.getRequestDispatcher("/WEB-INF/jsp/common/login.jsp");
 			dispatcher.forward(request, response);
