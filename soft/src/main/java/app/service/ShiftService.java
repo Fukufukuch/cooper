@@ -26,21 +26,113 @@ public class ShiftService {
         this.optionLoader = new OptionLoader(new OptionRepository());
     }
 
+    private java.util.List<String> warnings = new java.util.ArrayList<>();
+
+    public java.util.List<String> getWarnings() {
+        return java.util.Collections.unmodifiableList(warnings);
+    }
+    private java.util.List<app.generate.shortageSlot> shortageSlots = new java.util.ArrayList<>();
+    private java.util.List<app.generate.WarningSlot> warningSlots = new java.util.ArrayList<>();
+    private java.util.List<java.util.Map<String, Object>> shortageSummary = new java.util.ArrayList<>();
+
+    public java.util.List<app.generate.shortageSlot> getShortageSlots() {
+        return java.util.Collections.unmodifiableList(shortageSlots);
+    }
+
+    public java.util.List<app.generate.WarningSlot> getWarningSlots() {
+        return java.util.Collections.unmodifiableList(warningSlots);
+    }
+
+    public java.util.List<java.util.Map<String, Object>> getShortageSummary() {
+        return java.util.Collections.unmodifiableList(shortageSummary);
+    }
+
     public Map<LocalDate, Map<TimeSlot, Map<Position, List<String>>>> generateShift() {
         Option option = optionLoader.load();
-        List<TimeSlot> timeSlots = timeSlotLoader.loadAll();
+        warnings.clear();
+
+                List<TimeSlot> timeSlots = timeSlotLoader.loadAll();
         List<Position> positions = positionLoader.loadAll();
         List<Worker> workers = workerLoader.loadAll(option);
         ShiftRepository shiftRepo = new ShiftRepository();
+        WorkerRepository workerRepo = new WorkerRepository();
 
         LocalDate startDate = option.getFirstDate();
         LocalDate endDate = startDate.plusDays(option.getGenerateDays() - 1);
+        // ここで、月が替わった際の不整合に備えて、生成対象の開始日の月について
+        // シフトテーブルからワーカー毎の合計を再集計し、worker.monthly_work_minutes を上書きします。
+        try {
+            int year = startDate.getYear();
+            int month = startDate.getMonthValue();
+            java.util.Map<String, Integer> monthMap = shiftRepo.sumMinutesByWorkerForMonth(year, month);
+
+            // 全ワーカーについて存在しないものは0に設定するため、loader のワーカー一覧を使う
+            for (Worker w : workers) {
+                String wid = w.getId();
+                int m = monthMap.getOrDefault(wid, 0);
+                try {
+                    workerRepo.setMonthlyMinutes(wid, m);
+                } catch (Exception we) {
+                    String msg = "failed to set monthly minutes for worker=" + wid + ": " + we.getMessage();
+                    warnings.add(msg);
+                    System.err.println(msg);
+                }
+            }
+        } catch (Exception ex) {
+            String msg = "failed to recompute monthly minutes for start month: " + ex.getMessage();
+            warnings.add(msg);
+            System.err.println(msg);
+        }
+        
+        // 既存シフトを削除する前に、その期間に割り当てられていた分をワーカーの月労働時間から差し引く
+        try {
+            java.util.Map<String, Integer> oldMinutes = shiftRepo.sumMinutesByWorkerBetween(startDate, endDate);
+            for (java.util.Map.Entry<String, Integer> e : oldMinutes.entrySet()) {
+                String wid = e.getKey();
+                int minutes = e.getValue();
+                if (minutes != 0) {
+                    try {
+                        // 差分として減算（addMonthlyMinutes は負数で減算可能）
+                        workerRepo.addMonthlyMinutes(wid, -minutes);
+                    } catch (Exception we) {
+                        String msg = "failed to subtract old minutes for worker=" + wid + ": " + we.getMessage();
+                        warnings.add(msg);
+                        System.err.println(msg);
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            // 集計に失敗しても削除は試みる
+            String msg = "failed to sum old shift minutes: " + ex.getMessage();
+            warnings.add(msg);
+            System.err.println(msg);
+        }
 
         shiftRepo.deleteBetween(startDate, endDate);
 
         ShiftGenerator generator = new ShiftGenerator(timeSlots, positions, workers, option);
 
         Map<LocalDate, Map<TimeSlot, Map<Position, List<String>>>> shift = generator.generate();
+        // generator が保持する不足/警告リストを保存
+        this.shortageSlots = new java.util.ArrayList<>(generator.getShortageSlots());
+        this.warningSlots = new java.util.ArrayList<>(generator.getWarningSlots());
+
+        // 簡易サマリ（日付＋時間帯で集約）を作成
+        java.util.Map<String, Integer> cnt = new java.util.HashMap<>();
+        for (app.generate.shortageSlot s : this.shortageSlots) {
+            String timeName = s.getTimeSlot() == null ? "—" : s.getTimeSlot().getName();
+            String key = s.getDate().toString() + "|" + timeName;
+            cnt.put(key, cnt.getOrDefault(key, 0) + 1);
+        }
+        this.shortageSummary.clear();
+        for (java.util.Map.Entry<String, Integer> e : cnt.entrySet()) {
+            String[] parts = e.getKey().split("\\|", 2);
+            java.util.Map<String, Object> m = new java.util.HashMap<>();
+            m.put("date", java.time.LocalDate.parse(parts[0]));
+            m.put("timeSlot", parts.length > 1 ? parts[1] : "—");
+            m.put("count", e.getValue());
+            this.shortageSummary.add(m);
+        }
 
         for (var dateEntry : shift.entrySet()) {
             LocalDate date = dateEntry.getKey();
@@ -54,37 +146,74 @@ public class ShiftService {
                     for (String workerId : posEntry.getValue()) {
                         // validate before inserting to avoid DB errors
                         if (workerId == null || workerId.trim().isEmpty()) {
-                            System.err.println("Skipping shift insert: empty workerId for date=" + date + " pos=" + pos.getName());
+                            String msg = "Skipping shift insert: empty workerId for date=" + date + " pos=" + pos.getName();
+                            warnings.add(msg);
+                            System.err.println(msg);
                             continue;
                         }
                         int positionId = pos.getId();
                         if (positionId <= 0) {
-                            System.err.println("Skipping shift insert: invalid position id=" + positionId + " for pos=" + pos.getName());
+                            String msg = "Skipping shift insert: invalid position id=" + positionId + " for pos=" + pos.getName();
+                            warnings.add(msg);
+                            System.err.println(msg);
                             continue;
                         }
                         int sm = slot.getStartMinute(), em = slot.getEndMinute();
                         if (sm < 0 || sm >= 24*60 || em < 0 || em >= 24*60) {
-                            System.err.println("Skipping shift insert: invalid minutes start=" + sm + " end=" + em + " for slot=" + slot.getName());
+                            String msg = "Skipping shift insert: invalid minutes start=" + sm + " end=" + em + " for slot=" + slot.getName();
+                            warnings.add(msg);
+                            System.err.println(msg);
                             continue;
                         }
 
                         try {
-                            shiftRepo.insert(
+                            int shiftId = shiftRepo.insert(
                                 date,
                                 workerId,
                                 positionId,
                                 sm,
                                 em,
-                                slot.getName()
+                                slot.getName(),
+                                warnings
                             );
+                            if (shiftId > 0) {
+                                try {
+                                    workerRepo.addMonthlyMinutes(workerId, slot.getWorkMinutes());
+                                } catch (Exception we) {
+                                    String msg = "failed to update monthly minutes for worker=" + workerId + ": " + we.getMessage();
+                                    warnings.add(msg);
+                                    System.err.println(msg);
+                                }
+                            }
                         } catch (RuntimeException ex) {
-                            // Log and continue to avoid full generation failure
-                            System.err.println("shift insert failed for date=" + date + " worker=" + workerId + " pos=" + positionId + ": " + ex.getMessage());
+                            String msg = "shift insert failed for date=" + date + " worker=" + workerId + " pos=" + positionId + ": " + ex.getMessage();
+                            warnings.add(msg);
+                            System.err.println(msg);
                         }
                     }
                 }
             }
         }
+        // 生成後に全期間の累計を再計算して worker.total_work_minutes を上書きします。
+        try {
+            java.util.Map<String, Integer> totalMap = shiftRepo.sumMinutesByWorkerAll();
+            for (Worker w : workers) {
+                String wid = w.getId();
+                int t = totalMap.getOrDefault(wid, 0);
+                try {
+                    workerRepo.setTotalMinutes(wid, t);
+                } catch (Exception we) {
+                    String msg = "failed to set total minutes for worker=" + wid + ": " + we.getMessage();
+                    warnings.add(msg);
+                    System.err.println(msg);
+                }
+            }
+        } catch (Exception ex) {
+            String msg = "failed to recompute total minutes: " + ex.getMessage();
+            warnings.add(msg);
+            System.err.println(msg);
+        }
+
         return shift;
     }
 

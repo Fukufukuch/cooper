@@ -38,4 +38,44 @@ public class WorkerRepository {
 
         return list;
     }
+
+    /** 月労働時間と累計労働時間を加算して更新します。 */
+    public void addMonthlyMinutes(String workerId, int minutes) {
+        String sql = "UPDATE worker SET monthly_work_minutes = monthly_work_minutes + ?, total_work_minutes = total_work_minutes + ? WHERE workerID = ?";
+        try (Connection conn = Db.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, minutes);
+            ps.setInt(2, minutes);
+            ps.setString(3, workerId);
+            ps.executeUpdate();
+        } catch (Exception e) {
+            throw new RuntimeException("worker 月労働時間更新失敗", e);
+        }
+    }
+
+    /** 指定ワーカーの月間労働時間を上書きします。存在しない場合は何もしません。 */
+    public void setMonthlyMinutes(String workerId, int minutes) {
+        String sql = "UPDATE worker SET monthly_work_minutes = ? WHERE workerID = ?";
+        try (Connection conn = Db.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, minutes);
+            ps.setString(2, workerId);
+            ps.executeUpdate();
+        } catch (Exception e) {
+            throw new RuntimeException("worker 月間労働時間上書き失敗", e);
+        }
+    }
+
+    /** 指定ワーカーの累計労働時間を上書きします。存在しない場合は何もしません。 */
+    public void setTotalMinutes(String workerId, int minutes) {
+        String sql = "UPDATE worker SET total_work_minutes = ? WHERE workerID = ?";
+        try (Connection conn = Db.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, minutes);
+            ps.setString(2, workerId);
+            ps.executeUpdate();
+        } catch (Exception e) {
+            throw new RuntimeException("worker 累計労働時間上書き失敗", e);
+        }
+    }
 }

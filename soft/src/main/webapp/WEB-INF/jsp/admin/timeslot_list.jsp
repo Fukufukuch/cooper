@@ -25,9 +25,9 @@
           <th>名前</th>
           <th>開始（時:分）</th>
           <th>終了（時:分）</th>
-          <th>最小余剰</th>
-          <th>最大余剰</th>
-          <th>権限必要数</th>
+          <th>追加最小人数</th>
+          <th>追加最大人数</th>
+          <th>必要権限者数</th>
           <th>操作</th>
         </tr>
       </thead>
@@ -107,9 +107,9 @@
         </div>
         <input type="hidden" name="startMinute">
         <input type="hidden" name="endMinute">
-        <input type="number" name="minExtraWorkers" placeholder="最小余剰" class="form-control tiny-input">
-        <input type="number" name="maxExtraWorkers" placeholder="最大余剰" class="form-control tiny-input">
-        <input type="number" name="requireAuthorityWorkers" placeholder="権限数" class="form-control tiny-input">
+        <input type="number" name="minExtraWorkers" placeholder="追加最小人数" class="form-control tiny-input">
+        <input type="number" name="maxExtraWorkers" placeholder="追加最大人数" class="form-control tiny-input">
+        <input type="number" name="requireAuthorityWorkers" placeholder="権限者数" class="form-control tiny-input">
         <button type="submit" class="btn primary small">追加</button>
       </form>
     </div>

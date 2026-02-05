@@ -26,7 +26,7 @@
           <th>名前</th>
           <th>最小人数</th>
           <th>最大人数</th>
-          <th>権限必要数</th>
+          <th>必要権限者数</th>
           <th>操作</th>
         </tr>
       </thead>
@@ -77,7 +77,7 @@
         <input type="text" name="name" placeholder="名前" class="form-control small-input">
         <input type="number" name="minWorkers" placeholder="最小人数" class="form-control tiny-input">
         <input type="number" name="maxWorkers" placeholder="最大人数" class="form-control tiny-input">
-        <input type="number" name="requireAuthorityWorkers" placeholder="権限数" class="form-control tiny-input">
+        <input type="number" name="requireAuthorityWorkers" placeholder="権限者数" class="form-control tiny-input">
         <button type="submit" class="btn primary small">追加</button>
       </form>
     </div>
