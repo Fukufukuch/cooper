@@ -80,14 +80,30 @@
 
         <c:if test="${not empty warningSlots}">
             <div style="margin-top:12px; padding:12px; border:1px solid #f0d9ff; background:#fbf8ff;">
-                <strong>警告枠一覧:</strong>
+                <strong>警告サマリ (日付 × 時間帯):</strong>
+                <table style="width:100%; margin-top:8px; border-collapse:collapse;">
+                    <tr style="background:#f5f5f5;"><th style="padding:6px;border:1px solid #eee; text-align:left;">日付</th><th style="padding:6px;border:1px solid #eee; text-align:left;">時間帯</th><th style="padding:6px;border:1px solid #eee; text-align:right;">件数</th></tr>
+                    <c:forEach var="w" items="${warningSummary}">
+                        <tr>
+                            <td style="padding:6px;border:1px solid #eee;"><c:out value="${w['date']}"/></td>
+                            <td style="padding:6px;border:1px solid #eee;"><c:out value="${w['timeSlot']}"/></td>
+                            <td style="padding:6px;border:1px solid #eee; text-align:right;"><c:out value="${w['count']}"/></td>
+                        </tr>
+                    </c:forEach>
+                </table>
+            </div>
+        </c:if>
+
+        <c:if test="${not empty warningSlots}">
+            <div style="margin-top:12px; padding:12px; border:1px solid #f0d9ff; background:#fbf8ff;">
+                <strong>警告枠詳細:</strong>
                 <ul style="margin-top:8px;">
                     <c:forEach var="wslot" items="${warningSlots}">
                         <li>
                             日付: <c:out value="${wslot.date}"/> ・
                             時間帯: <c:out value="${wslot.timeSlot != null ? wslot.timeSlot.name : '—'}"/> ・
                             ポジション: <c:out value="${wslot.position != null ? wslot.position.name : '—'}"/> ・
-                            種別: <c:out value="${wslot.warningType}"/> ・ タグ: <c:out value="${wslot.nonconformTag}"/>
+                            種別: 不適合タグによる警告 ・ タグID: <c:out value="${wslot.nonconformTag}"/>
                             <c:if test="${not empty wslot.warningWorkers}">
                                 <div>該当者:
                                     <c:forEach var="wid" items="${wslot.warningWorkers}" varStatus="vs">

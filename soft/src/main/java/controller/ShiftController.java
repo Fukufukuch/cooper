@@ -28,6 +28,7 @@ public class ShiftController extends HttpServlet {
         java.util.List<app.generate.shortageSlot> shortageSlots = shiftService.getShortageSlots();
         java.util.List<app.generate.WarningSlot> warningSlots = shiftService.getWarningSlots();
         java.util.List<java.util.Map<String, Object>> shortageSummary = shiftService.getShortageSummary();
+        java.util.List<java.util.Map<String, Object>> warningSummary = shiftService.getWarningSummary();
 
         // Build map userID -> username for display
         java.util.Set<String> ids = new java.util.HashSet<>();
@@ -36,6 +37,12 @@ public class ShiftController extends HttpServlet {
                 for (var posEntry : slotEntry.getValue().entrySet()) {
                     ids.addAll(posEntry.getValue());
                 }
+            }
+        }
+        // warningSlots のワーカーIDも追加
+        for (var wslot : warningSlots) {
+            if (wslot.getWarningWorkers() != null) {
+                ids.addAll(wslot.getWarningWorkers());
             }
         }
         app.repository.UserRepository userRepo = new app.repository.UserRepository();
@@ -50,6 +57,7 @@ public class ShiftController extends HttpServlet {
         req.setAttribute("shortageSlots", shortageSlots);
         req.setAttribute("warningSlots", warningSlots);
         req.setAttribute("shortageSummary", shortageSummary);
+        req.setAttribute("warningSummary", warningSummary);
 
         try {
             req.getRequestDispatcher("/WEB-INF/jsp/shiftGenerate/result.jsp")

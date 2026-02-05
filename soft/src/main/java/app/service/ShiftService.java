@@ -34,6 +34,7 @@ public class ShiftService {
     private java.util.List<app.generate.shortageSlot> shortageSlots = new java.util.ArrayList<>();
     private java.util.List<app.generate.WarningSlot> warningSlots = new java.util.ArrayList<>();
     private java.util.List<java.util.Map<String, Object>> shortageSummary = new java.util.ArrayList<>();
+    private java.util.List<java.util.Map<String, Object>> warningSummary = new java.util.ArrayList<>();
 
     public java.util.List<app.generate.shortageSlot> getShortageSlots() {
         return java.util.Collections.unmodifiableList(shortageSlots);
@@ -45,6 +46,10 @@ public class ShiftService {
 
     public java.util.List<java.util.Map<String, Object>> getShortageSummary() {
         return java.util.Collections.unmodifiableList(shortageSummary);
+    }
+
+    public java.util.List<java.util.Map<String, Object>> getWarningSummary() {
+        return java.util.Collections.unmodifiableList(warningSummary);
     }
 
     public Map<LocalDate, Map<TimeSlot, Map<Position, List<String>>>> generateShift() {
@@ -133,6 +138,56 @@ public class ShiftService {
             m.put("count", e.getValue());
             this.shortageSummary.add(m);
         }
+        // ソート: 日付順、かつ timeSlots の定義順でソートする
+        java.util.Map<String, Integer> slotOrder = new java.util.HashMap<>();
+        int idx = 0;
+        for (TimeSlot ts : timeSlots) {
+            slotOrder.put(ts.getName(), idx++);
+        }
+        this.shortageSummary.sort((a, b) -> {
+            java.time.LocalDate da = (java.time.LocalDate)a.get("date");
+            java.time.LocalDate db = (java.time.LocalDate)b.get("date");
+            int c = da.compareTo(db);
+            if (c != 0) return c;
+            String ta = (String)a.get("timeSlot");
+            String tb = (String)b.get("timeSlot");
+            Integer ia = slotOrder.getOrDefault(ta, Integer.MAX_VALUE);
+            Integer ib = slotOrder.getOrDefault(tb, Integer.MAX_VALUE);
+            c = ia.compareTo(ib);
+            if (c != 0) return c;
+            return ta.compareTo(tb);
+        });
+
+        // 警告サマリ（日付＋時間帯で集約）を作成
+        java.util.Map<String, Integer> warnCnt = new java.util.HashMap<>();
+        for (app.generate.WarningSlot ws : this.warningSlots) {
+            String timeName = ws.getTimeSlot() == null ? "—" : ws.getTimeSlot().getName();
+            String key = ws.getDate().toString() + "|" + timeName;
+            warnCnt.put(key, warnCnt.getOrDefault(key, 0) + 1);
+        }
+        this.warningSummary.clear();
+        for (java.util.Map.Entry<String, Integer> e : warnCnt.entrySet()) {
+            String[] parts = e.getKey().split("\\|", 2);
+            java.util.Map<String, Object> m = new java.util.HashMap<>();
+            m.put("date", java.time.LocalDate.parse(parts[0]));
+            m.put("timeSlot", parts.length > 1 ? parts[1] : "—");
+            m.put("count", e.getValue());
+            this.warningSummary.add(m);
+        }
+        // ソート: 日付順、かつ timeSlots の定義順でソートする
+        this.warningSummary.sort((a, b) -> {
+            java.time.LocalDate da = (java.time.LocalDate)a.get("date");
+            java.time.LocalDate db = (java.time.LocalDate)b.get("date");
+            int c = da.compareTo(db);
+            if (c != 0) return c;
+            String ta = (String)a.get("timeSlot");
+            String tb = (String)b.get("timeSlot");
+            Integer ia = slotOrder.getOrDefault(ta, Integer.MAX_VALUE);
+            Integer ib = slotOrder.getOrDefault(tb, Integer.MAX_VALUE);
+            c = ia.compareTo(ib);
+            if (c != 0) return c;
+            return ta.compareTo(tb);
+        });
 
         for (var dateEntry : shift.entrySet()) {
             LocalDate date = dateEntry.getKey();

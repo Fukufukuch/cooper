@@ -127,6 +127,9 @@ public class UserDao {
                 ps.executeUpdate();
             }
 
+            // スタッフ作成時は位置情報とタグは未設定（0）なので、同期テーブルには何も入れない
+            // ただし、後で管理画面で編集する際に同期されるよう準備完了
+
             con.commit();
             con.setAutoCommit(true);
             return userID;
@@ -259,9 +262,13 @@ public boolean updateStaff(
             " work_place = ? " +
             "WHERE userID = ? AND usertype = b'1'";
 
-    try (Connection con = Db.getConnection();
-         PreparedStatement ps = con.prepareStatement(sql)) {
+    Connection con = null;
+    PreparedStatement ps = null;
+    try {
+        con = Db.getConnection();
+        con.setAutoCommit(false);
 
+        ps = con.prepareStatement(sql);
         ps.setString(1, username);
         ps.setString(2, email);
         ps.setString(3, phoneNumber);
@@ -271,7 +278,51 @@ public boolean updateStaff(
         ps.setString(7, workPlace);
         ps.setString(8, userID);
 
-        return ps.executeUpdate() == 1;
+        int updated = ps.executeUpdate();
+        if (updated != 1) {
+            con.rollback();
+            return false;
+        }
+
+        // 同期: worker_available_position (単一 position を users.Position から反映)
+        try (PreparedStatement delPos = con.prepareStatement("DELETE FROM worker_available_position WHERE workerID = ?")) {
+            delPos.setString(1, userID);
+            delPos.executeUpdate();
+        }
+        if (position > 0) {
+            try (PreparedStatement insPos = con.prepareStatement("INSERT INTO worker_available_position(workerID, positionID) VALUES (?, ?)") ) {
+                insPos.setString(1, userID);
+                insPos.setInt(2, position);
+                insPos.executeUpdate();
+            }
+        }
+
+        // 同期: worker_nonconform_tag (単一 Tag を users.Tag から反映)
+        // Tag > 0 の場合のみ同期（Tag=0は既存データを削除して何も追加しない）
+        if (tag > 0) {
+            // 既存タグを削除
+            try (PreparedStatement delTag = con.prepareStatement("DELETE FROM worker_nonconform_tag WHERE workerID = ?")) {
+                delTag.setString(1, userID);
+                delTag.executeUpdate();
+            }
+            // 新しいタグを挿入
+            try (PreparedStatement insTag = con.prepareStatement("INSERT INTO worker_nonconform_tag(workerID, nonconformID) VALUES (?, ?)") ) {
+                insTag.setString(1, userID);
+                insTag.setInt(2, tag);
+                insTag.executeUpdate();
+            }
+        }
+
+        con.commit();
+        return true;
+    } catch (Exception e) {
+        if (con != null) {
+            try { con.rollback(); } catch (Exception ignore) {}
+        }
+        throw new SQLException("updateStaff failed", e);
+    } finally {
+        if (ps != null) try { ps.close(); } catch (Exception ignore) {}
+        if (con != null) try { con.setAutoCommit(true); con.close(); } catch (Exception ignore) {}
     }
 }
 // ==================================================
@@ -346,6 +397,24 @@ public String createUser(
             try (PreparedStatement ps = con.prepareStatement(insertWorker)) {
                 ps.setString(1, userID);
                 ps.executeUpdate();
+            }
+
+            // 同期: worker_available_position (position を反映)
+            if (position > 0) {
+                try (PreparedStatement insPos = con.prepareStatement("INSERT INTO worker_available_position(workerID, positionID) VALUES (?, ?)")) {
+                    insPos.setString(1, userID);
+                    insPos.setInt(2, position);
+                    insPos.executeUpdate();
+                }
+            }
+
+            // 同期: worker_nonconform_tag (tag を反映)
+            if (tag > 0) {
+                try (PreparedStatement insTag = con.prepareStatement("INSERT INTO worker_nonconform_tag(workerID, nonconformID) VALUES (?, ?)")) {
+                    insTag.setString(1, userID);
+                    insTag.setInt(2, tag);
+                    insTag.executeUpdate();
+                }
             }
         }
 
@@ -457,19 +526,66 @@ public boolean updateUser(
             " work_place = ? " +
             "WHERE userID = ?";
 
-    try (Connection con = Db.getConnection();
-         PreparedStatement ps = con.prepareStatement(sql)) {
+    Connection con = null;
+    try {
+        con = Db.getConnection();
+        con.setAutoCommit(false);
 
-        ps.setString(1, username);
-        ps.setString(2, email);
-        ps.setString(3, phoneNumber);
-        ps.setDate(4, dateOfBirth);
-        ps.setInt(5, tag);
-        ps.setInt(6, position);
-        ps.setString(7, workPlace);
-        ps.setString(8, userID);
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, username);
+            ps.setString(2, email);
+            ps.setString(3, phoneNumber);
+            ps.setDate(4, dateOfBirth);
+            ps.setInt(5, tag);
+            ps.setInt(6, position);
+            ps.setString(7, workPlace);
+            ps.setString(8, userID);
 
-        return ps.executeUpdate() == 1;
+            int updated = ps.executeUpdate();
+            if (updated != 1) {
+                con.rollback();
+                return false;
+            }
+        }
+
+        // 同期: worker_available_position (position を反映)
+        try (PreparedStatement delPos = con.prepareStatement("DELETE FROM worker_available_position WHERE workerID = ?")) {
+            delPos.setString(1, userID);
+            delPos.executeUpdate();
+        }
+        if (position > 0) {
+            try (PreparedStatement insPos = con.prepareStatement("INSERT INTO worker_available_position(workerID, positionID) VALUES (?, ?)")) {
+                insPos.setString(1, userID);
+                insPos.setInt(2, position);
+                insPos.executeUpdate();
+            }
+        }
+
+        // 同期: worker_nonconform_tag (tag を反映)
+        // Tag > 0 の場合のみ同期（Tag=0は既存データを削除して何も追加しない）
+        if (tag > 0) {
+            // 既存タグを削除
+            try (PreparedStatement delTag = con.prepareStatement("DELETE FROM worker_nonconform_tag WHERE workerID = ?")) {
+                delTag.setString(1, userID);
+                delTag.executeUpdate();
+            }
+            // 新しいタグを挿入
+            try (PreparedStatement insTag = con.prepareStatement("INSERT INTO worker_nonconform_tag(workerID, nonconformID) VALUES (?, ?)")) {
+                insTag.setString(1, userID);
+                insTag.setInt(2, tag);
+                insTag.executeUpdate();
+            }
+        }
+
+        con.commit();
+        return true;
+    } catch (Exception e) {
+        if (con != null) {
+            try { con.rollback(); } catch (Exception ignore) {}
+        }
+        throw new SQLException("updateUser failed", e);
+    } finally {
+        if (con != null) try { con.setAutoCommit(true); con.close(); } catch (Exception ignore) {}
     }
 }
 public boolean resetPassword(String userID, String newPassword) throws SQLException {
