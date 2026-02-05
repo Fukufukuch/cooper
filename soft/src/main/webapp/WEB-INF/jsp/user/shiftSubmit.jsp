@@ -14,7 +14,7 @@
 
 <body>
   <div class="container">
-  <div class="h1">シフト自動生成システム</div>
+  <div class="h1">オートシフタ</div>
 
   <%@ include file="/WEB-INF/jsp/common/user_tabs.jspf" %>
 
@@ -118,6 +118,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     shiftRequests.push({
         helpDay: date,
+        timeSlotId: parseInt(timeSlotId),
         timeSlotName: timeSlotName
     });
 
@@ -142,13 +143,57 @@ document.addEventListener("DOMContentLoaded", () => {
             div.innerHTML = `
                 <div>📅`+ s.helpDay + `</div>
                 <div>⏰`+ s.timeSlotName + `</div>
-            `;
+                <button onclick="removeShift(` + shiftRequests.indexOf(s) + `)">削除</button>
+            `
             shiftList.appendChild(div);
         });
 
         countSpan.textContent = shiftRequests.length + "件";
         
     }
+
+        window.removeShift = function (i) {
+        shiftRequests.splice(i, 1);
+        renderShiftList();
+        };
+
+        // ===== サーバーへの送信 =====
+    window.submitShifts = function () {
+
+    // 送信データが空なら中断
+    if (shiftRequests.length === 0) {
+        alert("提出するシフト希望がありません");
+        return;
+    }
+
+    fetch("<%= request.getContextPath() %>/user/shift/submit/api", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(shiftRequests)
+    })
+    .then(res => {
+        // HTTPエラー対策
+        if (!res.ok) {
+            throw new Error("HTTP status " + res.status);
+        }
+        return res.json();
+    })
+    .then(data => {
+        if (data.status === "success") {
+            alert("提出完了！");
+            shiftRequests = [];
+            renderShiftList();
+        } else {
+            alert("エラー: " + data.status);
+        }
+    })
+    .catch(err => {
+        console.error("submit error:", err);
+        alert("送信に失敗しました");
+    });
+};
 
 });
 </script>
