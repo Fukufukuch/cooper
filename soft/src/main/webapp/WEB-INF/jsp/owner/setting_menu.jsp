@@ -43,6 +43,22 @@
         </div>
         <a class="btn" href="${pageContext.request.contextPath}/Logout">実行</a>
       </div>
+
+      <div class="action-card">
+        <div>
+          <div style="font-weight:800;">タイムスロット管理</div>
+          <div class="note">シフト生成で使う時間帯の追加・編集・無効化</div>
+        </div>
+        <a class="btn" href="${pageContext.request.contextPath}/admin/timeslot">開く</a>
+      </div>
+
+      <div class="action-card">
+        <div>
+          <div style="font-weight:800;">ポジション管理</div>
+          <div class="note">ポジション（役割）の追加・編集・無効化</div>
+        </div>
+        <a class="btn" href="${pageContext.request.contextPath}/admin/position">開く</a>
+      </div>
     </div>
   </div>
 </div>

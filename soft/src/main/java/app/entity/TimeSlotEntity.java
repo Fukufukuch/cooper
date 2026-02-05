@@ -9,10 +9,12 @@ public class TimeSlotEntity {
     private final int minExtraWorkers;
     private final int maxExtraWorkers;
     private final int requireAuthorityWorkers;
+    private final boolean active;
 
     public TimeSlotEntity(
         int id, String name, int startMinute, int endMinute, 
-        int minExtraWorkers, int maxExtraWorkers, int requireAuthorityWorkers
+        int minExtraWorkers, int maxExtraWorkers, int requireAuthorityWorkers,
+        boolean active
     ) {
         this.id = id;
         this.name = name;
@@ -21,6 +23,7 @@ public class TimeSlotEntity {
         this.minExtraWorkers = minExtraWorkers;
         this.maxExtraWorkers = maxExtraWorkers;
         this.requireAuthorityWorkers = requireAuthorityWorkers;
+        this.active = active;
     }
 
     public int getId() {
@@ -49,5 +52,9 @@ public class TimeSlotEntity {
 
     public int getRequireAuthorityWorkers() {
         return requireAuthorityWorkers;
+    }
+
+    public boolean isActive() {
+        return active;
     }
 }

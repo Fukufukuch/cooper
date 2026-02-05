@@ -41,6 +41,27 @@ public class ShiftGenerateServlet extends HttpServlet {
                 req.setAttribute("maxDay", opt.getMaxWorktimeofDay());
             }
 
+            if (req.getParameter("newcomerMinutes") != null) {
+                req.setAttribute("newcomerMinutes", Integer.parseInt(req.getParameter("newcomerMinutes")));
+            } else if (opt != null) {
+                req.setAttribute("newcomerMinutes", opt.getNewcomerThresholdMinutes());
+            }
+
+            if (req.getParameter("seniorRequired") != null) {
+                try {
+                    req.setAttribute("seniorRequired", Integer.parseInt(req.getParameter("seniorRequired")));
+                } catch (NumberFormatException ignored) {
+                }
+            } else if (opt != null) {
+                req.setAttribute("seniorRequired", opt.getRequiredSeniorWorkers());
+            }
+
+            if (req.getParameter("firstDate") != null) {
+                req.setAttribute("firstDate", req.getParameter("firstDate"));
+            } else if (opt != null) {
+                req.setAttribute("firstDate", opt.getFirstdate());
+            }
+
             req.getRequestDispatcher("/WEB-INF/jsp/shiftGenerate/confirm.jsp").forward(req, resp);
         } else if (servletPath.endsWith("setting.jsp")) {
             // setting: populate input initial values from DB when available

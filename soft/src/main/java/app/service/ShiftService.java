@@ -52,14 +52,35 @@ public class ShiftService {
                     Position pos = posEntry.getKey();
 
                     for (String workerId : posEntry.getValue()) {
-                        shiftRepo.insert(
-                            date,
-                            workerId,
-                            pos.getId(),
-                            slot.getStartMinute(),
-                            slot.getEndMinute(),
-                            slot.getName()
-                        );
+                        // validate before inserting to avoid DB errors
+                        if (workerId == null || workerId.trim().isEmpty()) {
+                            System.err.println("Skipping shift insert: empty workerId for date=" + date + " pos=" + pos.getName());
+                            continue;
+                        }
+                        int positionId = pos.getId();
+                        if (positionId <= 0) {
+                            System.err.println("Skipping shift insert: invalid position id=" + positionId + " for pos=" + pos.getName());
+                            continue;
+                        }
+                        int sm = slot.getStartMinute(), em = slot.getEndMinute();
+                        if (sm < 0 || sm >= 24*60 || em < 0 || em >= 24*60) {
+                            System.err.println("Skipping shift insert: invalid minutes start=" + sm + " end=" + em + " for slot=" + slot.getName());
+                            continue;
+                        }
+
+                        try {
+                            shiftRepo.insert(
+                                date,
+                                workerId,
+                                positionId,
+                                sm,
+                                em,
+                                slot.getName()
+                            );
+                        } catch (RuntimeException ex) {
+                            // Log and continue to avoid full generation failure
+                            System.err.println("shift insert failed for date=" + date + " worker=" + workerId + " pos=" + positionId + ": " + ex.getMessage());
+                        }
                     }
                 }
             }

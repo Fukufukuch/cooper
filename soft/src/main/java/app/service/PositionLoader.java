@@ -15,6 +15,6 @@ public class PositionLoader {
     }
 
     public List<Position> loadAll() {
-        return repository.findAll().stream().map(Position::fromEntity).toList();
+        return repository.findAllActive().stream().map(Position::fromEntity).toList();
     }
 }

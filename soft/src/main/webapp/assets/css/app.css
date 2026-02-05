@@ -362,6 +362,15 @@ a{color:inherit; text-decoration:none}
 }
 .help-fab:hover{filter:brightness(1.05)}
 
+/* Table responsiveness + small input helpers */
+.table-responsive{overflow-x:auto;}
+.small-input{width:90px; max-width:100%;}
+.tiny-input{width:72px; max-width:100%;}
+@media (max-width:640px){
+  .small-input,.tiny-input{width:64px}
+  .table th,.table td{padding:8px;font-size:13px}
+}
+
 /* ===== シフト希望一覧 ===== */
 
 .shift-list {

@@ -7,16 +7,18 @@ public class PositionEntity {
     private final int minWorkers;
     private final int maxWorkers;
     private final int requireAuthorityWorkers;
+    private final boolean active;
 
     public PositionEntity (
         int id, String name, int minWorkers, int maxWorkers,
-        int requireAuthorityWorkers
+        int requireAuthorityWorkers, boolean active
     ) {
         this.id = id;
         this.name = name;
         this.minWorkers = minWorkers;
         this.maxWorkers = maxWorkers;
         this.requireAuthorityWorkers = requireAuthorityWorkers;
+        this.active = active;
     }
 
     public int getId() {
@@ -37,5 +39,9 @@ public class PositionEntity {
 
     public int getRequireAuthorityWorkers() {
         return requireAuthorityWorkers;
+    }
+
+    public boolean isActive() {
+        return active;
     }
 }

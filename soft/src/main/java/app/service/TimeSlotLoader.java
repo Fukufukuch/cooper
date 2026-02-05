@@ -15,6 +15,6 @@ public class TimeSlotLoader {
     }
 
     public List<TimeSlot> loadAll() {
-        return repository.findAll().stream().map(TimeSlot::fromEntity).toList();
+        return repository.findAllActive().stream().map(TimeSlot::fromEntity).toList();
     }
 }
