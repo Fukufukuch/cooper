@@ -39,11 +39,6 @@
         </select>
     </div>
 
-    <div class="form-group checkbox-group">
-        <input type="checkbox" id="allDay">
-        <label for="allDay">終日勤務可能</label>
-    </div>
-
     <div class="form-group">
         <label>時間</label>
         <div style="display: flex; gap: 10px; align-items: center;">

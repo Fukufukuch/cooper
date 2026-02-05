@@ -30,13 +30,6 @@
             <input type="date" id="shiftDate">
         </div>
 
-        <div class="form-group checkbox">
-            <label for="allDay">
-                <input type="checkbox" id="allDay">
-                終日勤務可能
-            </label>
-        </div>
-
         <div class="form-group">
             <label for="timeSlot">シフト区分</label>
             <select id="timeSlot">
